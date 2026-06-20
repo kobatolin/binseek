@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+dist/
+build/
+.pytest_cache/
+
+# C++ build artifacts
+*.o
+*.so
+*.dll
+*.exe
+*.lib
+*.a
+
+# Compiled core library (kept in repo optionally, but ignored by default)
+binseek/libcore.so
+binseek/libcore.dll
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*~
+
+# OS
+.DS_Store
+Thumbs.db

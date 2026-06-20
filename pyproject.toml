@@ -1,0 +1,19 @@
+[project]
+name = "binseek"
+version = "0.1.0"
+description = "A TUI binary file viewer, searcher and editor."
+requires-python = ">=3.13"
+dependencies = [
+    "textual>=0.70",
+]
+
+[project.scripts]
+binseek = "binseek.app:main"
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["binseek*"]
