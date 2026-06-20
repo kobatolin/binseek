@@ -160,9 +160,11 @@ class HexView(Static):
         if row_start < self._offset:
             self._offset = row_start
         elif row_start + bpr > self._offset + page_size:
-            new_offset = row_start + bpr - page_size
-            max_offset = size - page_size
-            self._offset = min(new_offset, max_offset)
+            # Keep the last page row-aligned: the top row is page_rows-1 rows
+            # before the last row of the file.
+            last_row_start = ((size - 1) // bpr) * bpr
+            new_offset = max(0, last_row_start - (self._page_rows - 1) * bpr)
+            self._offset = new_offset
 
     def jump_to(self, offset: int) -> None:
         if not self._buffer:

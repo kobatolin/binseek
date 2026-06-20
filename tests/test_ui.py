@@ -279,3 +279,31 @@ def test_digit_keys_are_hex_input_in_replace_mode() -> None:
         if app._buffer:
             app._buffer.close()
         os.unlink(path)
+
+
+def test_last_row_base_address_is_aligned() -> None:
+    size = 1000
+    with tempfile.NamedTemporaryFile(delete=False) as f:
+        f.write(b"\x00" * size)
+        path = f.name
+
+    app = BinseekApp(path)
+
+    async def _run() -> None:
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            hex_view = app.query_one("#hex")
+            await pilot.press("end")
+            await pilot.pause()
+            assert hex_view.cursor == size - 1
+            content = str(hex_view._Static__content)
+            first_line = content.splitlines()[0]
+            first_addr = int(first_line[:8], 16)
+            assert first_addr % 16 == 0, f"first visible row address is unaligned: 0x{first_addr:08X}"
+
+    try:
+        asyncio.run(_run())
+    finally:
+        if app._buffer:
+            app._buffer.close()
+        os.unlink(path)
