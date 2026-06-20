@@ -39,6 +39,25 @@ binseek/
 - 修改区间模型：覆盖/插入/删除，自动合并，保存时顺序写出
 - 菜单/快捷键：Open/Save/Save As/Find/Replace/Goto/Quit
 
+## 开发工作流
+1. 创建并激活虚拟环境：
+   ```bash
+   python3.13 -m venv .venv
+   .venv\Scripts\activate
+   pip install -r requirements-dev.txt
+   ```
+2. 修改 C++ 代码后重新构建：
+   ```bash
+   wsl make linux
+   wsl make windows
+   ```
+3. 每次提交前运行测试：
+   ```bash
+   wsl make test-cpp
+   python -m pytest tests -q
+   ```
+4. 按里程碑做小而清晰的 git commit，消息格式如 `feat:`、`fix:`、`docs:`、`refactor:`。
+
 ## 里程碑
 1. M0：仓库初始化 + Makefile + .gitignore
 2. M1：C++ mmap + C API + ctypes 加载

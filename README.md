@@ -98,6 +98,27 @@ python -m pytest tests -q
 make test PYTHON=.venv/bin/python3
 ```
 
+## Development & Git
+
+- Create a virtual environment before installing dependencies:
+  ```bash
+  python3.13 -m venv .venv
+  .venv\Scripts\activate        # Windows
+  # source .venv/bin/activate   # Linux/macOS
+  pip install -r requirements-dev.txt
+  ```
+- Build the C++ core after any C++ changes (`make linux` / `make windows`).
+- Run tests before committing:
+  ```bash
+  make test-cpp
+  python -m pytest tests -q
+  ```
+- Commit style: keep messages concise and milestone-based, e.g.
+  - `feat: ...`
+  - `fix: ...`
+  - `docs: ...`
+  - `refactor: ...`
+
 ## Project Layout
 
 ```

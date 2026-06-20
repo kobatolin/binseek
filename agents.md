@@ -13,7 +13,22 @@
 4. 新增功能时应同步补充 pytest 测试，关键 C++ 算法应在 `tests/cpp/` 加小型自测。
 5. 保持跨平台：路径处理使用 `pathlib`；C++ 中使用 `#ifdef _WIN32` 区分 Windows 与 POSIX。
 6. 不要引入不必要的依赖；C++ 侧尽量只使用标准库。
-7. 功能阶段完成后提交git commit，并更新文档。
+7. 功能阶段完成后提交 git commit，并更新相关文档（README / issue.md / project.md）。
+
+## 环境、测试与提交
+- 使用虚拟环境：
+  ```bash
+  python3.13 -m venv .venv
+  .venv\Scripts\activate
+  pip install -r requirements-dev.txt
+  ```
+- 提交前必须运行测试：
+  ```bash
+  wsl make test-cpp
+  python -m pytest tests -q
+  ```
+- git commit 信息风格：`feat:`、`fix:`、`docs:`、`refactor:`、`style:`、`test:`。
+- 一个功能点尽量一次 commit，保持提交历史清晰。
 
 ## 常用命令
 ```bash

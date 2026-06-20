@@ -11,11 +11,11 @@ from textual.binding import Binding
 
 from binseek.model.buffer import Buffer, CoreError
 from binseek.ui.confirm_dialog import ConfirmDialog
+from binseek.ui.file_dialog import FileDialog
 from binseek.ui.find_dialog import FindDialog
 from binseek.ui.goto_dialog import GotoDialog
 from binseek.ui.help_dialog import HelpDialog
 from binseek.ui.hex_view import HexView
-from binseek.ui.input_dialog import InputDialog
 from binseek.ui.menu_bar import MenuBar
 from binseek.ui.replace_dialog import ReplaceDialog
 from binseek.ui.status_bar import StatusBar
@@ -118,11 +118,11 @@ class BinseekApp(App[None]):
 
     def action_open(self) -> None:
         def proceed_to_open() -> None:
-            def on_path(path: str | None) -> None:
-                if path:
-                    self._do_open(Path(path))
-
-            self.push_screen(InputDialog("Open file path:"), on_path)
+            start = self._buffer.path.parent if self._buffer else Path.cwd()
+            self.push_screen(
+                FileDialog("Open file", initial=start),
+                lambda path: path and self._do_open(Path(path)),
+            )
 
         if not self._buffer or not self._buffer.dirty:
             proceed_to_open()
@@ -171,17 +171,45 @@ class BinseekApp(App[None]):
             self.notify("No file open", severity="warning")
             return
 
-        def on_path(path: str | None) -> None:
-            if path:
-                try:
-                    self._buffer.save(Path(path))
-                except CoreError as exc:
-                    self.notify(f"Save failed: {exc}", severity="error")
-                    return
-                self.refresh_status()
-                self.notify(f"Saved {path}")
+        def do_save(target: Path) -> None:
+            try:
+                self._buffer.save(target)
+            except CoreError as exc:
+                self.notify(f"Save failed: {exc}", severity="error")
+                return
+            self.refresh_status()
+            self.notify(f"Saved {target}")
 
-        self.push_screen(InputDialog("Save as:", value=str(self._buffer.path)), on_path)
+        def on_path(path: str | None) -> None:
+            if not path:
+                return
+            target = Path(path)
+            if target.exists() and target.resolve() != self._buffer.path.resolve():
+
+                def on_choice(choice: str | None) -> None:
+                    if choice == "save":
+                        do_save(target)
+
+                self.push_screen(
+                    ConfirmDialog(
+                        f"{target.name} already exists. Overwrite?",
+                        save_text="Overwrite",
+                        discard_text="Cancel",
+                    ),
+                    on_choice,
+                )
+            else:
+                do_save(target)
+
+        self.push_screen(
+            FileDialog(
+                "Save As",
+                initial=self._buffer.path.parent,
+                default_name=self._buffer.path.name,
+                save_mode=True,
+            ),
+            on_path,
+        )
 
     def _do_find(self, pattern: bytes) -> None:
         if not self._buffer:
