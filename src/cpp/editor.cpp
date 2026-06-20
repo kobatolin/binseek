@@ -69,12 +69,13 @@ void Editor::replace(uint64_t offset, uint64_t old_len, const uint8_t* new_data,
     size_t insert_index = segments_.size();
     for (auto it = segments_.begin(); it != segments_.end(); ) {
         uint64_t seg_len = it->length();
+        if (pos == offset) {
+            insert_index = static_cast<size_t>(it - segments_.begin());
+        }
         if (pos >= offset && pos + seg_len <= offset + old_len) {
             it = segments_.erase(it);
+            pos += seg_len;
         } else {
-            if (pos == offset) {
-                insert_index = static_cast<size_t>(it - segments_.begin());
-            }
             ++it;
             pos += seg_len;
         }

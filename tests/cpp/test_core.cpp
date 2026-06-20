@@ -56,15 +56,25 @@ int main() {
     uint8_t replacement[] = {0x48, 0x61, 0x6C, 0x6C, 0x6F};
     assert(bs_replace(h, 0, 5, replacement, 5) == 0);
 
+    // Regression: replacing a range that aligns with an internal segment boundary.
+    uint8_t replacement2[] = {0xAA, 0xBB, 0xCC, 0xDD};
+    assert(bs_replace(h, 0, 4, replacement2, 4) == 0);
+    std::vector<uint8_t> chunk2(4);
+    assert(bs_read_chunk(h, 0, 4, chunk2.data()) == 0);
+    assert(chunk2[0] == 0xAA);
+    assert(chunk2[1] == 0xBB);
+    assert(chunk2[2] == 0xCC);
+    assert(chunk2[3] == 0xDD);
+
     assert(bs_save(h, OUTPUT_PATH) == 0);
     bs_close(h);
 
     auto out = read_file(OUTPUT_PATH);
     assert(out.size() == data.size());
-    assert(out[0] == 0x48);
-    assert(out[1] == 0x61);
-    assert(out[2] == 0x6C);
-    assert(out[3] == 0x6C);
+    assert(out[0] == 0xAA);
+    assert(out[1] == 0xBB);
+    assert(out[2] == 0xCC);
+    assert(out[3] == 0xDD);
     assert(out[4] == 0x6F);
 
     std::remove(INPUT_PATH);
