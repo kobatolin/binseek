@@ -31,6 +31,8 @@ Navigation
   Arrows / HJKL                 Move cursor (H left, J down, K up, L right)
   PageUp / PageDown             Scroll by page
   Home / End                    Go to start / end of file
+  1 / 2 / 4                     Switch 1B/2B/4B display mode (VIEW mode)
+  B                             Toggle big/little endian (VIEW mode)
 
 Search results
   F9 / Shift+F9                 Next / previous result

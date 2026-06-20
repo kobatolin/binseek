@@ -28,13 +28,15 @@ class StatusBar(Static):
         offset: int = 0,
         dirty: bool = False,
         pending: str = "",
+        display_mode: str = "1B",
+        endian: str = "LE",
         message: str = "",
     ) -> None:
         if message:
             self.update(Text(message))
             return
         dirty_mark = " *" if dirty else ""
-        text = f"[{mode}] {path}{dirty_mark} | Size: {size} | Offset: 0x{offset:08X} ({offset})"
+        text = f"[{mode} {display_mode} {endian}] {path}{dirty_mark} | Size: {size} | Offset: 0x{offset:08X} ({offset})"
         if pending:
-            text += f" | Nibble: {pending}"
+            text += f" | Pending: {pending}"
         self.update(Text(text))
