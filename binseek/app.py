@@ -107,11 +107,39 @@ class BinseekApp(App[None]):
         self.notify(f"Opened {path}")
 
     def action_open(self) -> None:
-        def on_path(path: str | None) -> None:
-            if path:
-                self._do_open(Path(path))
+        def proceed_to_open() -> None:
+            def on_path(path: str | None) -> None:
+                if path:
+                    self._do_open(Path(path))
 
-        self.push_screen(InputDialog("Open file path:"), on_path)
+            self.push_screen(InputDialog("Open file path:"), on_path)
+
+        if not self._buffer or not self._buffer.dirty:
+            proceed_to_open()
+            return
+
+        def on_choice(choice: str | None) -> None:
+            if choice == "save":
+                try:
+                    self._buffer.save()
+                except CoreError as exc:
+                    self.notify(f"Save failed: {exc}", severity="error")
+                    return
+                self.refresh_status()
+                self.notify(f"Saved {self._buffer.path}")
+                proceed_to_open()
+            elif choice == "discard":
+                proceed_to_open()
+            # Cancel: stay with current file
+
+        self.push_screen(
+            ConfirmDialog(
+                "File has unsaved changes. Open another file?",
+                save_text="Save & Open",
+                discard_text="Discard & Open",
+            ),
+            on_choice,
+        )
 
     def action_save(self) -> None:
         if not self._buffer:
@@ -275,7 +303,11 @@ class BinseekApp(App[None]):
             # Cancel: do nothing
 
         self.push_screen(
-            ConfirmDialog("File has unsaved changes. What would you like to do?"),
+            ConfirmDialog(
+                "File has unsaved changes. What would you like to do?",
+                save_text="Save & Quit",
+                discard_text="Discard & Quit",
+            ),
             on_choice,
         )
 

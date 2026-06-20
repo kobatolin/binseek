@@ -34,16 +34,23 @@ class ConfirmDialog(ModalScreen[str | None]):
     }
     """
 
-    def __init__(self, message: str) -> None:
+    def __init__(
+        self,
+        message: str,
+        save_text: str = "Save & Quit",
+        discard_text: str = "Discard & Quit",
+    ) -> None:
         super().__init__()
         self.message = message
+        self.save_text = save_text
+        self.discard_text = discard_text
 
     def compose(self) -> ComposeResult:
         with Vertical():
             yield Label(self.message)
             with Horizontal():
-                yield Button("Save & Quit", variant="primary", id="save")
-                yield Button("Discard & Quit", id="discard")
+                yield Button(self.save_text, variant="primary", id="save")
+                yield Button(self.discard_text, id="discard")
                 yield Button("Cancel", id="cancel")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
