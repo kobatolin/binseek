@@ -9,9 +9,16 @@
 - 若要在 Windows 宿主侧直接调用，可执行 `wsl make ...` 或在 WSL 配置集成。
 
 ## Python 版本
-- WSL 默认环境中 `python3.13` 命令可能不存在，通常使用 `python3`。
+- WSL 默认环境中 `python3.13` 命令可能不存在，通常使用 `python3`（如 Ubuntu 24.04 为 3.12.3）。
 - Windows 宿主侧已安装 `Python 3.13.5`。
-- `pyproject.toml` 指定 `requires-python = ">=3.13"`。
+- `pyproject.toml` 已放宽为 `requires-python = ">=3.12"`，允许直接使用 WSL 默认 Python。
+- 为避免覆盖 Windows `.venv`，WSL 使用独立的 `.venv-linux`：
+  ```bash
+  python3 -m venv .venv-linux
+  source .venv-linux/bin/activate
+  pip install -r requirements-dev.txt
+  python -m binseek [file]
+  ```
 
 ## 依赖
 - Textual 需要通过 pip 安装（见 `requirements.txt`）。

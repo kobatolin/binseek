@@ -19,7 +19,8 @@
 - 使用虚拟环境：
   ```bash
   python3.13 -m venv .venv
-  .venv\Scripts\activate
+  .venv\Scripts\activate        # Windows
+  # source .venv-linux/bin/activate  # WSL
   pip install -r requirements-dev.txt
   ```
 - 提交前必须运行测试：

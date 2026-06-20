@@ -79,6 +79,18 @@ source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
+### WSL (Ubuntu)
+
+WSL usually ships with `python3` (e.g. 3.12) rather than `python3.13`. A
+separate Linux virtual environment is kept so the existing Windows `.venv`
+remains usable from the host:
+
+```bash
+python3 -m venv .venv-linux
+source .venv-linux/bin/activate
+pip install -r requirements-dev.txt
+```
+
 Start binseek:
 
 ```bash
