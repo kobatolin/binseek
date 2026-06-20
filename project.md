@@ -14,7 +14,7 @@
 | TUI | Python 3.13 + Textual | 原生菜单、对话框、快捷键，跨平台体验好 |
 | 核心算法/IO | C++17 + ctypes C API | 独立共享库，避免 C++ ABI 问题 |
 | 构建 | 顶层 Makefile | `make linux` / `make windows` / `make test` / `make clean` |
-| 打包 | pyproject.toml + requirements.txt | 标准 Python 项目 |
+| 打包 | pyproject.toml + setuptools + `python -m build` | 标准 Python wheel，同时打包 Windows DLL 与 Linux so |
 
 ## 目录结构
 ```
@@ -57,6 +57,19 @@ binseek/
    python -m pytest tests -q
    ```
 4. 按里程碑做小而清晰的 git commit，消息格式如 `feat:`、`fix:`、`docs:`、`refactor:`。
+
+## 分发构建
+1. 先构建 Windows / Linux 共享库：
+   ```bash
+   wsl make windows
+   wsl make linux
+   ```
+2. 安装 `build` 工具并生成 wheel：
+   ```bash
+   pip install build
+   python -m build --wheel --outdir dist
+   ```
+3. 产物 `dist/binseek-0.1.0-py3-none-any.whl` 同时包含 `libcore.dll` 与 `libcore.so`，分发后用户可直接 `pip install` 使用。
 
 ## 里程碑
 1. M0：仓库初始化 + Makefile + .gitignore

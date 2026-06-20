@@ -46,6 +46,16 @@ make test
 python -m binseek [file]
 ```
 
+## 打包分发
+构建跨平台 wheel（同时包含 Windows `libcore.dll` 与 Linux `libcore.so`）：
+```bash
+wsl make windows
+wsl make linux
+pip install build
+python -m build --wheel --outdir dist
+```
+产物位于 `dist/binseek-0.1.0-py3-none-any.whl`，可直接分发；安装后运行时会根据平台自动加载对应的共享库。
+
 ## 代码风格
 - Python：PEP 8，类型注解可选。
 - C++：C++17，清晰的分文件头/源结构，C API 函数使用 `bs_` 前缀。

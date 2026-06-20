@@ -144,6 +144,31 @@ binseek/
 └── requirements.txt
 ```
 
+## Packaging
+
+To build a distributable wheel that bundles both the Windows DLL and the Linux
+shared library:
+
+```bash
+# Make sure both platform libraries are up to date
+wsl make windows
+wsl make linux
+
+# Install the build frontend
+pip install build
+
+# Build the wheel
+python -m build --wheel --outdir dist
+```
+
+The output `dist/binseek-<version>-py3-none-any.whl` can be installed on either
+Windows or Linux; the correct shared library is loaded at runtime:
+
+```bash
+pip install dist/binseek-0.1.0-py3-none-any.whl
+binseek <file>
+```
+
 ## License
 
 MIT
