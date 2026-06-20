@@ -10,7 +10,7 @@ from textual.events import Key
 from rich.text import Text
 
 from binseek.model.buffer import Buffer
-from binseek.ui.help_dialog import HelpDialog
+from binseek.ui.help_dialog import HELP_TEXT, HelpDialog
 
 
 class EditMode(Enum):
@@ -165,7 +165,10 @@ class HexView(Static):
 
     def refresh_view(self) -> None:
         if not self._buffer:
-            self.update("No file open")
+            message = Text()
+            message.append("No file open\n\n", style="bold")
+            message.append(HELP_TEXT)
+            self.update(message)
             return
 
         size = self._buffer.size
@@ -226,6 +229,9 @@ class HexView(Static):
 
     def on_key(self, event: Key) -> None:
         if not self._buffer:
+            if event.key == "h":
+                self.app.push_screen(HelpDialog())
+                event.stop()
             return
 
         # Editing input (only active in REPLACE / INSERT modes).
