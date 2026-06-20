@@ -22,6 +22,24 @@ BS_API const char* bs_get_error(bs_handle_t handle);
 BS_API int         bs_get_size(bs_handle_t handle, uint64_t* size);
 BS_API int         bs_read_chunk(bs_handle_t handle, uint64_t offset, uint64_t len, uint8_t* out);
 
+BS_API int bs_search(
+    bs_handle_t handle,
+    const uint8_t* pattern,
+    uint64_t pattern_len,
+    uint64_t start_offset,
+    uint64_t max_results,
+    uint64_t* results,
+    uint64_t* result_count);
+
+BS_API int bs_replace(
+    bs_handle_t handle,
+    uint64_t offset,
+    uint64_t old_len,
+    const uint8_t* new_data,
+    uint64_t new_len);
+
+BS_API int bs_save(bs_handle_t handle, const char* out_path);
+
 #ifdef __cplusplus
 }
 #endif

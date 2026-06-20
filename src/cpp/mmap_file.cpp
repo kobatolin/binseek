@@ -1,5 +1,7 @@
 #include "mmap_file.h"
 
+#include <utility>
+
 #ifdef _WIN32
 #include <windows.h>
 #else
@@ -38,6 +40,51 @@ MmapFile::MmapFile()
     , addr_(nullptr)
     , size_(0)
 {
+}
+
+MmapFile::MmapFile(MmapFile&& other) noexcept
+    : error_(std::move(other.error_))
+#ifdef _WIN32
+    , hFile_(other.hFile_)
+    , hMapping_(other.hMapping_)
+#else
+    , fd_(other.fd_)
+#endif
+    , addr_(other.addr_)
+    , size_(other.size_)
+{
+#ifdef _WIN32
+    other.hFile_ = INVALID_HANDLE_VALUE;
+    other.hMapping_ = nullptr;
+#else
+    other.fd_ = -1;
+#endif
+    other.addr_ = nullptr;
+    other.size_ = 0;
+}
+
+MmapFile& MmapFile::operator=(MmapFile&& other) noexcept {
+    if (this != &other) {
+        close();
+        error_ = std::move(other.error_);
+#ifdef _WIN32
+        hFile_ = other.hFile_;
+        hMapping_ = other.hMapping_;
+#else
+        fd_ = other.fd_;
+#endif
+        addr_ = other.addr_;
+        size_ = other.size_;
+#ifdef _WIN32
+        other.hFile_ = INVALID_HANDLE_VALUE;
+        other.hMapping_ = nullptr;
+#else
+        other.fd_ = -1;
+#endif
+        other.addr_ = nullptr;
+        other.size_ = 0;
+    }
+    return *this;
 }
 
 MmapFile::~MmapFile() {

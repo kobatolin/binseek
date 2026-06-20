@@ -12,6 +12,8 @@ public:
 
     MmapFile(const MmapFile&) = delete;
     MmapFile& operator=(const MmapFile&) = delete;
+    MmapFile(MmapFile&& other) noexcept;
+    MmapFile& operator=(MmapFile&& other) noexcept;
 
     bool open(const char* path);
     void close();

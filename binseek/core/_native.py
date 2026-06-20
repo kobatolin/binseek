@@ -4,9 +4,8 @@ from __future__ import annotations
 
 import ctypes
 import platform
-import sys
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 
 
 def _library_path() -> Path:
@@ -59,6 +58,29 @@ _lib.bs_read_chunk.argtypes = [
     ctypes.POINTER(ctypes.c_uint8),
 ]
 _lib.bs_read_chunk.restype = ctypes.c_int
+
+_lib.bs_search.argtypes = [
+    ctypes.c_void_p,
+    ctypes.POINTER(ctypes.c_uint8),
+    ctypes.c_uint64,
+    ctypes.c_uint64,
+    ctypes.c_uint64,
+    ctypes.POINTER(ctypes.c_uint64),
+    ctypes.POINTER(ctypes.c_uint64),
+]
+_lib.bs_search.restype = ctypes.c_int
+
+_lib.bs_replace.argtypes = [
+    ctypes.c_void_p,
+    ctypes.c_uint64,
+    ctypes.c_uint64,
+    ctypes.POINTER(ctypes.c_uint8),
+    ctypes.c_uint64,
+]
+_lib.bs_replace.restype = ctypes.c_int
+
+_lib.bs_save.argtypes = [ctypes.c_void_p, ctypes.c_char_p]
+_lib.bs_save.restype = ctypes.c_int
 
 
 class CoreError(Exception):
@@ -118,3 +140,44 @@ class Core:
         buf = (ctypes.c_uint8 * length)()
         self._check(_lib.bs_read_chunk(self._handle, offset, length, buf))
         return bytes(buf)
+
+    def search(self, pattern: bytes, start: int = 0, max_results: int = 1000) -> List[int]:
+        if not pattern:
+            return []
+        if max_results <= 0:
+            return []
+        pattern_len = len(pattern)
+        pat_buf = (ctypes.c_uint8 * pattern_len).from_buffer_copy(pattern)
+        results = (ctypes.c_uint64 * max_results)()
+        count = ctypes.c_uint64(0)
+        self._check(
+            _lib.bs_search(
+                self._handle,
+                pat_buf,
+                pattern_len,
+                start,
+                max_results,
+                results,
+                ctypes.byref(count),
+            )
+        )
+        return [results[i] for i in range(count.value)]
+
+    def replace(self, offset: int, old_len: int, new_data: bytes) -> None:
+        new_len = len(new_data)
+        if new_len == 0:
+            new_buf = None
+        else:
+            new_buf = (ctypes.c_uint8 * new_len).from_buffer_copy(new_data)
+        self._check(
+            _lib.bs_replace(
+                self._handle,
+                offset,
+                old_len,
+                new_buf,
+                new_len,
+            )
+        )
+
+    def save(self, out_path: str | Path) -> None:
+        self._check(_lib.bs_save(self._handle, str(out_path).encode("utf-8")))
