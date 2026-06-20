@@ -307,3 +307,71 @@ def test_last_row_base_address_is_aligned() -> None:
         if app._buffer:
             app._buffer.close()
         os.unlink(path)
+
+
+def test_scrolling_down_does_not_jump_to_end() -> None:
+    with tempfile.NamedTemporaryFile(delete=False) as f:
+        f.write(b"\x00" * 200)
+        path = f.name
+
+    app = BinseekApp(path)
+
+    async def _run() -> None:
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            hex_view = app.query_one("#hex")
+            # Force a small viewport so we can test scrolling behavior.
+            hex_view._page_rows = 4
+            hex_view._ensure_visible()
+            hex_view.refresh_view()
+
+            # Cursor at start; first visible row is 0x00000000.
+            assert hex_view.cursor == 0
+            first_line = str(hex_view._Static__content).splitlines()[0]
+            assert first_line.startswith("00000000")
+
+            # Move down across the bottom row of the viewport (to row 4).
+            for _ in range(4):
+                await pilot.press("j")
+                await pilot.pause()
+            assert hex_view.cursor == 64
+            first_line = str(hex_view._Static__content).splitlines()[0]
+            # Should have scrolled down by exactly one row, not to the end.
+            assert first_line.startswith("00000010"), f"unexpected first row: {first_line[:8]}"
+
+    try:
+        asyncio.run(_run())
+    finally:
+        if app._buffer:
+            app._buffer.close()
+        os.unlink(path)
+
+
+def test_page_down_does_not_jump_to_end() -> None:
+    with tempfile.NamedTemporaryFile(delete=False) as f:
+        f.write(b"\x00" * 400)
+        path = f.name
+
+    app = BinseekApp(path)
+
+    async def _run() -> None:
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            hex_view = app.query_one("#hex")
+            hex_view._page_rows = 4
+            hex_view._ensure_visible()
+            hex_view.refresh_view()
+
+            await pilot.press("pagedown")
+            await pilot.pause()
+            first_line = str(hex_view._Static__content).splitlines()[0]
+            # Should scroll down by at least one row but not to the final page.
+            assert first_line.startswith("00000010"), f"unexpected first row: {first_line[:8]}"
+            assert not first_line.startswith("00000180"), "pagedown jumped to the last page"
+
+    try:
+        asyncio.run(_run())
+    finally:
+        if app._buffer:
+            app._buffer.close()
+        os.unlink(path)
