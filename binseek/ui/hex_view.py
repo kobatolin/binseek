@@ -91,7 +91,11 @@ class HexView(Static):
             self._cursor = 0
             self._offset = 0
             return
-        self._cursor = max(0, min(self._cursor, size - 1))
+
+        # INSERT mode allows the cursor to sit one byte past the end so
+        # bytes can be appended; other modes stay within [0, size-1].
+        max_cursor = size if self._mode == EditMode.INSERT else size - 1
+        self._cursor = max(0, min(self._cursor, max_cursor))
 
         page_size = self.page_size
         if size <= page_size:
@@ -99,7 +103,9 @@ class HexView(Static):
             return
 
         bpr = self.BYTES_PER_ROW
-        row_start = (self._cursor // bpr) * bpr
+        # When the cursor is at the very end, align to the last full row.
+        clamped = min(self._cursor, size - 1)
+        row_start = (clamped // bpr) * bpr
         if row_start < self._offset:
             self._offset = row_start
         elif row_start + bpr > self._offset + page_size:
@@ -128,6 +134,7 @@ class HexView(Static):
     def set_mode(self, mode: EditMode) -> None:
         self._mode = mode
         self._pending_nibble = None
+        self._ensure_visible()
         self.refresh_view()
 
     def on_resize(self) -> None:
@@ -259,7 +266,8 @@ class HexView(Static):
             self._ensure_visible()
             self.refresh_view()
         elif event.key == "end":
-            self._cursor = max(0, self._buffer.size - 1)
+            max_cursor = self._buffer.size if self._mode == EditMode.INSERT else self._buffer.size - 1
+            self._cursor = max(0, max_cursor)
             self._ensure_visible()
             self.refresh_view()
         elif event.key == "e":
