@@ -41,7 +41,8 @@ A fast, keyboard-driven **TUI binary file viewer, searcher and editor**.
 | `E` | Toggle REPLACE mode |
 | `Insert` | Toggle INSERT mode |
 | `Esc` | Return to VIEW mode |
-| Arrows / PageUp / PageDown | Navigate hex view |
+| Arrows / HJKL | Navigate hex view |
+| PageUp / PageDown | Scroll by page |
 
 ## Build
 

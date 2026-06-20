@@ -10,7 +10,7 @@ from textual.events import Key
 from rich.text import Text
 
 from binseek.model.buffer import Buffer
-from binseek.ui.help_dialog import HELP_TEXT, HelpDialog
+from binseek.ui.help_dialog import HELP_TEXT
 
 
 class EditMode(Enum):
@@ -229,9 +229,6 @@ class HexView(Static):
 
     def on_key(self, event: Key) -> None:
         if not self._buffer:
-            if event.key == "h":
-                self.app.push_screen(HelpDialog())
-                event.stop()
             return
 
         # Editing input (only active in REPLACE / INSERT modes).
@@ -245,13 +242,13 @@ class HexView(Static):
             return
 
         bpr = self.BYTES_PER_ROW
-        if event.key == "left":
+        if event.key in ("left", "h"):
             self.move_cursor(-1)
-        elif event.key == "right":
+        elif event.key in ("right", "l"):
             self.move_cursor(1)
-        elif event.key == "up":
+        elif event.key in ("up", "k"):
             self.move_cursor(-bpr)
-        elif event.key == "down":
+        elif event.key in ("down", "j"):
             self.move_cursor(bpr)
         elif event.key == "pageup":
             self.move_cursor(-self.page_size)
@@ -277,9 +274,6 @@ class HexView(Static):
                 self.set_mode(EditMode.INSERT)
         elif event.key == "escape":
             self.set_mode(EditMode.VIEW)
-        elif event.key == "h" and self._mode == EditMode.VIEW:
-            self.app.push_screen(HelpDialog())
-            return
         else:
             return
         event.stop()

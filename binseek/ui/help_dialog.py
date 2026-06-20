@@ -28,7 +28,8 @@ Original control shortcuts
   Ctrl+Q                        Quit
 
 Navigation
-  Arrows / PageUp / PageDown    Move cursor
+  Arrows / HJKL                 Move cursor (H left, J down, K up, L right)
+  PageUp / PageDown             Scroll by page
   Home / End                    Go to start / end of file
 
 Search results
@@ -38,7 +39,6 @@ Editing
   E                             Toggle REPLACE mode
   Insert                        Toggle INSERT mode
   Esc                           Return to VIEW mode
-  H                             Show this help
 """
 
 
