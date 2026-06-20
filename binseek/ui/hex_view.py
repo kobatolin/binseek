@@ -28,7 +28,7 @@ class HexView(Static):
     HexView {
         height: 1fr;
         width: 100%;
-        overflow: auto scroll;
+        overflow: hidden;
         background: $surface-darken-1;
         color: $text;
         padding: 0 1;
@@ -37,7 +37,6 @@ class HexView(Static):
     """
 
     BYTES_PER_ROW = 16
-    PAGE_ROWS = 16
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__("", *args, **kwargs)
@@ -48,6 +47,7 @@ class HexView(Static):
         self._search_current: Optional[int] = None
         self._mode = EditMode.VIEW
         self._pending_nibble: Optional[int] = None
+        self._page_rows = 16
 
     @property
     def buffer(self) -> Buffer | None:
@@ -78,8 +78,12 @@ class HexView(Static):
         self.refresh_view()
 
     @property
+    def page_rows(self) -> int:
+        return self._page_rows
+
+    @property
     def page_size(self) -> int:
-        return self.BYTES_PER_ROW * self.PAGE_ROWS
+        return self.BYTES_PER_ROW * self._page_rows
 
     def _ensure_visible(self) -> None:
         size = self._buffer.size if self._buffer else 0
@@ -112,6 +116,13 @@ class HexView(Static):
         self._mode = mode
         self._pending_nibble = None
         self.refresh_view()
+
+    def on_resize(self) -> None:
+        new_rows = max(1, self.size.height)
+        if new_rows != self._page_rows:
+            self._page_rows = new_rows
+            self._ensure_visible()
+            self.refresh_view()
 
     def _apply_byte(self, byte: int) -> None:
         if not self._buffer:
@@ -151,7 +162,7 @@ class HexView(Static):
 
         data = self._buffer.read(self._offset, min(self.page_size, size - self._offset))
         text = Text()
-        for row in range(self.PAGE_ROWS):
+        for row in range(self._page_rows):
             row_offset = self._offset + row * self.BYTES_PER_ROW
             if row_offset >= size:
                 break
@@ -188,7 +199,7 @@ class HexView(Static):
                 line.append(ch, style=style)
             line.append("|")
             text.append(line)
-            if row + 1 < self.PAGE_ROWS and row_offset + self.BYTES_PER_ROW < size:
+            if row + 1 < self._page_rows and row_offset + self.BYTES_PER_ROW < size:
                 text.append("\n")
         self.update(text)
         self.app.refresh_status()
