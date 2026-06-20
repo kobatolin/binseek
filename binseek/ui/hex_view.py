@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Iterable, Optional, Set
+
 from textual.widgets import Static
 from textual.events import Key
 from rich.text import Text
@@ -32,15 +34,23 @@ class HexView(Static):
         self._buffer: Buffer | None = None
         self._offset = 0
         self._cursor = 0
+        self._search_results: Set[int] = set()
+        self._search_current: Optional[int] = None
 
     @property
     def buffer(self) -> Buffer | None:
         return self._buffer
 
+    @property
+    def cursor(self) -> int:
+        return self._cursor
+
     def set_buffer(self, buffer: Buffer | None) -> None:
         self._buffer = buffer
         self._offset = 0
         self._cursor = 0
+        self._search_results.clear()
+        self._search_current = None
         self.refresh_view()
 
     @property
@@ -49,9 +59,30 @@ class HexView(Static):
 
     def _ensure_visible(self) -> None:
         size = self._buffer.size if self._buffer else 0
-        self._cursor = max(0, min(self._cursor, max(0, size - 1)))
+        if size == 0:
+            self._cursor = 0
+            self._offset = 0
+            return
+        self._cursor = max(0, min(self._cursor, size - 1))
         page_start = (self._cursor // self.page_size) * self.page_size
-        self._offset = max(0, min(page_start, size - 1 if size else 0))
+        self._offset = max(0, min(page_start, size - 1))
+
+    def jump_to(self, offset: int) -> None:
+        if not self._buffer:
+            return
+        self._cursor = offset
+        self._ensure_visible()
+        self.refresh_view()
+
+    def set_search_results(self, results: Iterable[int], current: Optional[int] = None) -> None:
+        self._search_results = set(results)
+        self._search_current = current
+        self.refresh_view()
+
+    def clear_search_results(self) -> None:
+        self._search_results.clear()
+        self._search_current = None
+        self.refresh_view()
 
     def refresh_view(self) -> None:
         if not self._buffer:
@@ -59,6 +90,10 @@ class HexView(Static):
             return
 
         size = self._buffer.size
+        if size == 0:
+            self.update("Empty file")
+            return
+
         data = self._buffer.read(self._offset, min(self.page_size, size - self._offset))
         text = Text()
         for row in range(self.PAGE_ROWS):
@@ -76,11 +111,14 @@ class HexView(Static):
                 style = ""
                 if abs_offset == self._cursor:
                     style = "reverse"
+                elif abs_offset == self._search_current:
+                    style = "bold magenta on yellow"
+                elif abs_offset in self._search_results:
+                    style = "bold yellow"
                 hex_parts.append((f"{byte:02X} ", style))
                 ch = chr(byte) if 32 <= byte < 127 else "."
                 ascii_chars.append((ch, style))
 
-            # Pad hex column so ASCII aligns when last row is short.
             for part, style in hex_parts:
                 line.append(part, style=style)
             missing = self.BYTES_PER_ROW - len(row_data)

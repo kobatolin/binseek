@@ -10,9 +10,12 @@ from textual.containers import Vertical
 from textual.binding import Binding
 
 from binseek.model.buffer import Buffer, CoreError
+from binseek.ui.find_dialog import FindDialog
+from binseek.ui.goto_dialog import GotoDialog
 from binseek.ui.hex_view import HexView
 from binseek.ui.input_dialog import InputDialog
 from binseek.ui.menu_bar import MenuBar
+from binseek.ui.replace_dialog import ReplaceDialog
 from binseek.ui.status_bar import StatusBar
 
 
@@ -47,6 +50,7 @@ class BinseekApp(App[None]):
         Binding("ctrl+h", "replace", "Replace"),
         Binding("ctrl+g", "goto", "Goto"),
         Binding("f3", "find_next", "Find Next"),
+        Binding("shift+f3", "find_prev", "Find Prev"),
         Binding("ctrl+q", "quit", "Quit"),
     ]
 
@@ -81,7 +85,7 @@ class BinseekApp(App[None]):
         status.update_status(
             path=str(self._buffer.path),
             size=self._buffer.size,
-            offset=hex_view._cursor if hex_view else 0,
+            offset=hex_view.cursor if hex_view else 0,
             dirty=self._buffer.dirty,
         )
 
@@ -137,17 +141,106 @@ class BinseekApp(App[None]):
 
         self.push_screen(InputDialog("Save as:", value=str(self._buffer.path)), on_path)
 
+    def _do_find(self, pattern: bytes) -> None:
+        if not self._buffer:
+            return
+        results = self._buffer.search(pattern)
+        hex_view = self.query_one(HexView)
+        if not results:
+            hex_view.clear_search_results()
+            self.notify("Pattern not found", severity="warning")
+            return
+        hex_view.set_search_results(results, results[0])
+        hex_view.jump_to(results[0])
+        self.notify(f"Found {len(results)} occurrence(s)")
+
     def action_find(self) -> None:
-        self.notify("Find dialog coming in M4", severity="information")
-
-    def action_replace(self) -> None:
-        self.notify("Replace dialog coming in M4", severity="information")
-
-    def action_goto(self) -> None:
-        self.notify("Goto dialog coming in M4", severity="information")
+        if not self._buffer:
+            self.notify("No file open", severity="warning")
+            return
+        self.push_screen(FindDialog(), self._do_find)
 
     def action_find_next(self) -> None:
-        self.notify("Find next coming in M4", severity="information")
+        if not self._buffer:
+            return
+        offset = self._buffer.search_next()
+        if offset is None:
+            self.notify("No more occurrences", severity="warning")
+            return
+        hex_view = self.query_one(HexView)
+        hex_view.set_search_results(self._buffer._search_results, offset)
+        hex_view.jump_to(offset)
+
+    def action_find_prev(self) -> None:
+        if not self._buffer:
+            return
+        offset = self._buffer.search_prev()
+        if offset is None:
+            self.notify("No previous occurrences", severity="warning")
+            return
+        hex_view = self.query_one(HexView)
+        hex_view.set_search_results(self._buffer._search_results, offset)
+        hex_view.jump_to(offset)
+
+    def _do_replace(self, find: bytes, replace: bytes, replace_all: bool) -> None:
+        if not self._buffer:
+            return
+        hex_view = self.query_one(HexView)
+        if replace_all:
+            results = self._buffer.search(find, max_results=100_000)
+            if not results:
+                self.notify("Pattern not found", severity="warning")
+                return
+            for offset in reversed(results):
+                try:
+                    self._buffer.replace(offset, len(find), replace)
+                except CoreError as exc:
+                    self.notify(f"Replace failed at {offset}: {exc}", severity="error")
+                    return
+            hex_view.clear_search_results()
+            self.refresh_status()
+            self.notify(f"Replaced {len(results)} occurrence(s)")
+        else:
+            # Replace the current search result, or find the first one.
+            current = self._buffer.current_search_result()
+            if current is None or self._buffer._last_pattern != find:
+                results = self._buffer.search(find)
+                if not results:
+                    self.notify("Pattern not found", severity="warning")
+                    return
+                current = results[0]
+            try:
+                self._buffer.replace(current, len(find), replace)
+            except CoreError as exc:
+                self.notify(f"Replace failed: {exc}", severity="error")
+                return
+            # Refresh search so the next replace moves on.
+            results = self._buffer.search(find)
+            hex_view.set_search_results(results, current)
+            hex_view.refresh_view()
+            self.refresh_status()
+            self.notify("Replaced one occurrence")
+
+    def action_replace(self) -> None:
+        if not self._buffer:
+            self.notify("No file open", severity="warning")
+            return
+        self.push_screen(ReplaceDialog(), lambda r: r and self._do_replace(*r))
+
+    def action_goto(self) -> None:
+        if not self._buffer:
+            self.notify("No file open", severity="warning")
+            return
+
+        def on_offset(offset: int | None) -> None:
+            if offset is None:
+                return
+            if offset >= self._buffer.size:
+                self.notify(f"Offset {offset} is beyond file size", severity="error")
+                return
+            self.query_one(HexView).jump_to(offset)
+
+        self.push_screen(GotoDialog(), on_offset)
 
     def action_quit(self) -> None:
         if self._buffer:

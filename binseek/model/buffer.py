@@ -46,9 +46,9 @@ class Buffer:
     def read(self, offset: int, length: int) -> bytes:
         return self._core.read_chunk(offset, length)
 
-    def search(self, pattern: bytes, start: int = 0) -> List[int]:
+    def search(self, pattern: bytes, start: int = 0, max_results: int = 1000) -> List[int]:
         self._last_pattern = pattern
-        self._search_results = self._core.search(pattern, start=start)
+        self._search_results = self._core.search(pattern, start=start, max_results=max_results)
         self._search_index = 0 if self._search_results else -1
         return self._search_results
 
