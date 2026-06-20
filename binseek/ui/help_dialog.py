@@ -36,7 +36,7 @@ Search results
 
 Editing
   E                             Toggle REPLACE mode
-  Insert                        Toggle EDIT mode
+  Insert                        Toggle INSERT mode
   Esc                           Return to VIEW mode
   H                             Show this help
 """

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from textual.widgets import Static
+from rich.text import Text
 
 
 class StatusBar(Static):
@@ -30,10 +31,10 @@ class StatusBar(Static):
         message: str = "",
     ) -> None:
         if message:
-            self.update(message)
+            self.update(Text(message))
             return
         dirty_mark = " *" if dirty else ""
         text = f"[{mode}] {path}{dirty_mark} | Size: {size} | Offset: 0x{offset:08X} ({offset})"
         if pending:
             text += f" | Nibble: {pending}"
-        self.update(text)
+        self.update(Text(text))

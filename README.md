@@ -16,7 +16,7 @@ A fast, keyboard-driven **TUI binary file viewer, searcher and editor**.
 - Direct editing modes:
   - **VIEW** (default): navigate
   - **REPLACE** (`E`): type two hex digits to overwrite the byte under the cursor
-  - **EDIT** (`Insert`): type two hex digits to insert a new byte at the cursor
+  - **INSERT** (`Insert`): type two hex digits to insert a new byte at the cursor
   - Press `Esc` to return to VIEW mode
 - Find bytes (hex or text) with result highlighting
 - Replace single or all occurrences
@@ -39,7 +39,7 @@ A fast, keyboard-driven **TUI binary file viewer, searcher and editor**.
 | `Ctrl+O` / `Ctrl+S` / `Ctrl+Shift+S` | Open / Save / Save As |
 | `Ctrl+F` / `Ctrl+H` / `Ctrl+G` / `Ctrl+Q` | Find / Replace / Goto / Quit |
 | `E` | Toggle REPLACE mode |
-| `Insert` | Toggle EDIT mode |
+| `Insert` | Toggle INSERT mode |
 | `Esc` | Return to VIEW mode |
 | Arrows / PageUp / PageDown | Navigate hex view |
 

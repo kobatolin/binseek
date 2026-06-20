@@ -16,7 +16,7 @@ from binseek.ui.help_dialog import HelpDialog
 class EditMode(Enum):
     VIEW = auto()
     REPLACE = auto()
-    EDIT = auto()
+    INSERT = auto()
 
 
 class HexView(Static):
@@ -146,7 +146,7 @@ class HexView(Static):
                 self.app.notify("Cannot replace beyond end of file", severity="warning")
                 return
             self._buffer.replace(self._cursor, 1, bytes([byte]))
-        elif self._mode == EditMode.EDIT:
+        elif self._mode == EditMode.INSERT:
             self._buffer.replace(self._cursor, 0, bytes([byte]))
         else:
             return
@@ -191,7 +191,7 @@ class HexView(Static):
                 if abs_offset == self._cursor:
                     if self._mode == EditMode.REPLACE:
                         style = "bold black on red"
-                    elif self._mode == EditMode.EDIT:
+                    elif self._mode == EditMode.INSERT:
                         style = "bold black on green"
                     else:
                         style = "reverse"
@@ -228,11 +228,11 @@ class HexView(Static):
         if not self._buffer:
             return
 
-        # Editing input (only active in REPLACE / EDIT modes).
+        # Editing input (only active in REPLACE / INSERT modes).
         if (
             len(event.key) == 1
             and event.key in "0123456789abcdefABCDEF"
-            and self._mode in (EditMode.REPLACE, EditMode.EDIT)
+            and self._mode in (EditMode.REPLACE, EditMode.INSERT)
         ):
             self._handle_hex_digit(event.key)
             event.stop()
@@ -265,10 +265,10 @@ class HexView(Static):
             else:
                 self.set_mode(EditMode.REPLACE)
         elif event.key == "insert":
-            if self._mode == EditMode.EDIT:
+            if self._mode == EditMode.INSERT:
                 self.set_mode(EditMode.VIEW)
             else:
-                self.set_mode(EditMode.EDIT)
+                self.set_mode(EditMode.INSERT)
         elif event.key == "escape":
             self.set_mode(EditMode.VIEW)
         elif event.key == "h" and self._mode == EditMode.VIEW:
