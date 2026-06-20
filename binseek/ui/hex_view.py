@@ -92,8 +92,21 @@ class HexView(Static):
             self._offset = 0
             return
         self._cursor = max(0, min(self._cursor, size - 1))
-        page_start = (self._cursor // self.page_size) * self.page_size
-        self._offset = max(0, min(page_start, size - 1))
+
+        page_size = self.page_size
+        if size <= page_size:
+            self._offset = 0
+            return
+
+        bpr = self.BYTES_PER_ROW
+        row_start = (self._cursor // bpr) * bpr
+        if row_start < self._offset:
+            self._offset = row_start
+        elif row_start + bpr > self._offset + page_size:
+            new_offset = row_start + bpr - page_size
+            max_offset = size - page_size
+            self._offset = min(new_offset, max_offset)
+        # else: cursor already visible, keep current offset
 
     def jump_to(self, offset: int) -> None:
         if not self._buffer:
