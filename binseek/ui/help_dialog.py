@@ -8,41 +8,74 @@ from textual.screen import ModalScreen
 from textual.widgets import Button, Label, Static
 
 
-HELP_TEXT = """Menu (function keys)
-  F1                            Help
-  F2                            Open
-  F3                            Find
-  F4                            Save
-  F5                            Save As
-  F6                            Replace
-  F7                            Goto
-  F8                            Quit
+def _format_col(items: list[tuple[str, str]], key_width: int) -> list[str]:
+    """Format a single column of key/description pairs."""
+    lines: list[str] = []
+    for key, desc in items:
+        if not key:
+            lines.append("")
+        else:
+            lines.append(f"  {key:<{key_width}} {desc}")
+    return lines
 
-Original control shortcuts
-  Ctrl+O                        Open
-  Ctrl+S                        Save
-  Ctrl+Shift+S                  Save As
-  Ctrl+F                        Find
-  Ctrl+H                        Replace
-  Ctrl+G                        Goto
-  Ctrl+Q                        Quit
 
-Navigation
-  Arrows / HJKL                 Move cursor (H left, J down, K up, L right)
-  PageUp / PageDown             Scroll by page
-  Home / End                    Go to start / end of file
-  1 / 2 / 4                     Switch 1B/2B/4B display mode (VIEW mode)
-  B                             Toggle big/little endian (VIEW mode)
+def _build_help_text() -> str:
+    """Build a compact two-column help text."""
+    left = [
+        ("Menu (function keys)", ""),
+        ("F1", "Help"),
+        ("F2", "Open"),
+        ("F3", "Find"),
+        ("F4", "Save"),
+        ("F5", "Save As"),
+        ("F6", "Replace"),
+        ("F7", "Goto"),
+        ("F8", "Quit"),
+        ("", ""),
+        ("Original shortcuts", ""),
+        ("Ctrl+O", "Open"),
+        ("Ctrl+S", "Save"),
+        ("Ctrl+Shift+S", "Save As"),
+        ("Ctrl+F", "Find"),
+        ("Ctrl+H", "Replace"),
+        ("Ctrl+G", "Goto"),
+        ("Ctrl+Q", "Quit"),
+    ]
+    right = [
+        ("Navigation", ""),
+        ("Arrows / HJKL", "Move cursor"),
+        ("PageUp / Dn", "Scroll by page"),
+        ("Home / End", "Start / end"),
+        ("1 / 2 / 4", "1B/2B/4B mode"),
+        ("B", "Toggle endian"),
+        ("", ""),
+        ("Search results", ""),
+        ("F9", "Next result"),
+        ("Shift+F9", "Previous"),
+        ("", ""),
+        ("Editing", ""),
+        ("E", "Toggle REPLACE"),
+        ("Insert", "Toggle INSERT"),
+        ("Delete", "Delete byte"),
+        ("Esc", "Return to VIEW"),
+    ]
+    key_width = 13
+    left_lines = _format_col(left, key_width)
+    right_lines = _format_col(right, key_width)
+    max_len = max(len(left_lines), len(right_lines))
 
-Search results
-  F9 / Shift+F9                 Next / previous result
+    lines: list[str] = []
+    for i in range(max_len):
+        l = left_lines[i] if i < len(left_lines) else ""
+        r = right_lines[i] if i < len(right_lines) else ""
+        if not r:
+            lines.append(l)
+        else:
+            lines.append(f"{l:<34}  {r}")
+    return "\n".join(lines)
 
-Editing
-  E                             Toggle REPLACE mode
-  Insert                        Toggle INSERT mode
-  Delete                        Delete byte at cursor (INSERT mode)
-  Esc                           Return to VIEW mode
-"""
+
+HELP_TEXT = _build_help_text()
 
 
 class HelpDialog(ModalScreen[None]):
@@ -53,7 +86,7 @@ class HelpDialog(ModalScreen[None]):
         align: center middle;
     }
     HelpDialog > Vertical {
-        width: 60;
+        width: 74;
         height: auto;
         max-height: 80%;
         background: $surface;
