@@ -4,6 +4,7 @@
 
 CXX_LINUX  ?= g++
 CXX_WIN    ?= x86_64-w64-mingw32-g++
+PYTHON     ?= python3
 
 CXXFLAGS   ?= -O3 -std=c++17 -Wall -Wextra -I src/cpp/include
 
@@ -62,9 +63,10 @@ test-cpp: $(TEST_BIN)
 
 # Python tests
 pytest:
-	python -m pytest tests -q
+	$(PYTHON) -m pytest tests -q
 
 test: test-cpp pytest
+
 
 clean:
 	rm -rf $(BUILD_DIR) $(OUT_DIR)/libcore.so $(OUT_DIR)/libcore.dll

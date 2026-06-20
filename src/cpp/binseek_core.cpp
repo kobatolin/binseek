@@ -22,7 +22,13 @@ struct BsCore {
 };
 
 namespace {
-    thread_local std::string g_last_error;
+    constexpr size_t ERR_LEN = 512;
+    thread_local char g_last_error[ERR_LEN] = {0};
+
+    void set_error(const char* msg) {
+        std::strncpy(g_last_error, msg ? msg : "", ERR_LEN - 1);
+        g_last_error[ERR_LEN - 1] = '\0';
+    }
 
     BsCore* as_core(bs_handle_t h) {
         return static_cast<BsCore*>(h);
@@ -31,12 +37,12 @@ namespace {
 
 bs_handle_t bs_open(const char* path) {
     if (!path) {
-        g_last_error = "null path";
+        set_error("null path");
         return nullptr;
     }
     MmapFile file;
     if (!file.open(path)) {
-        g_last_error = file.error();
+        set_error(file.error().c_str());
         return nullptr;
     }
     return new BsCore(std::move(file));
@@ -50,7 +56,7 @@ void bs_close(bs_handle_t handle) {
 
 const char* bs_get_error(bs_handle_t handle) {
     if (!handle) {
-        return g_last_error.c_str();
+        return g_last_error;
     }
     auto* core = as_core(handle);
     if (!core->error.empty()) {
