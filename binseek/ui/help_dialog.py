@@ -38,6 +38,7 @@ Search results
 Editing
   E                             Toggle REPLACE mode
   Insert                        Toggle INSERT mode
+  Delete                        Delete byte at cursor (INSERT mode)
   Esc                           Return to VIEW mode
 """
 

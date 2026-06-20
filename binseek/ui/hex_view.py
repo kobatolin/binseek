@@ -321,6 +321,13 @@ class HexView(Static):
                 self.set_mode(EditMode.VIEW)
             else:
                 self.set_mode(EditMode.INSERT)
+        elif event.key == "delete":
+            if self._mode != EditMode.INSERT or self._cursor >= self._buffer.size:
+                return
+            self._buffer.replace(self._cursor, 1, b"")
+            self._pending_nibble = None
+            self._ensure_visible()
+            self.refresh_view()
         elif event.key == "escape":
             self.set_mode(EditMode.VIEW)
         else:

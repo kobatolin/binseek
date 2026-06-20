@@ -96,3 +96,37 @@ def test_confirm_dialog_keyboard_navigation() -> None:
     asyncio.run(_run())
 
 
+def test_delete_byte_in_insert_mode() -> None:
+    with tempfile.NamedTemporaryFile(delete=False) as f:
+        f.write(b"ABCDEFGH")
+        path = f.name
+
+    app = BinseekApp(path)
+
+    async def _run() -> None:
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            hex_view = app.query_one("#hex")
+            assert hex_view.cursor == 0
+            assert app._buffer.size == 8
+
+            await pilot.press("l", "l")  # cursor at 'C' (offset 2)
+            await pilot.pause()
+            assert hex_view.cursor == 2
+
+            await pilot.press("insert")  # enter INSERT mode
+            await pilot.pause()
+            assert hex_view.edit_mode == "INSERT"
+
+            await pilot.press("delete")  # remove byte at cursor
+            await pilot.pause()
+            assert app._buffer.size == 7
+            assert hex_view.cursor == 2
+            assert app._buffer.read(0, 7) == b"ABDEFGH"
+
+    try:
+        asyncio.run(_run())
+    finally:
+        if app._buffer:
+            app._buffer.close()
+        os.unlink(path)
