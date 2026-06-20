@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from enum import Enum, auto
 from typing import Iterable, Optional, Set
 
 from textual.widgets import Static
@@ -11,8 +12,16 @@ from rich.text import Text
 from binseek.model.buffer import Buffer
 
 
+class EditMode(Enum):
+    VIEW = auto()
+    REPLACE = auto()
+    INSERT = auto()
+
+
 class HexView(Static):
-    """Page-based hex/ASCII viewer with keyboard navigation."""
+    """Page-based hex/ASCII viewer with keyboard navigation and editing."""
+
+    can_focus = True
 
     DEFAULT_CSS = """
     HexView {
@@ -36,6 +45,8 @@ class HexView(Static):
         self._cursor = 0
         self._search_results: Set[int] = set()
         self._search_current: Optional[int] = None
+        self._mode = EditMode.VIEW
+        self._pending_nibble: Optional[int] = None
 
     @property
     def buffer(self) -> Buffer | None:
@@ -45,12 +56,24 @@ class HexView(Static):
     def cursor(self) -> int:
         return self._cursor
 
+    @property
+    def edit_mode(self) -> str:
+        return self._mode.name
+
+    @property
+    def pending_str(self) -> str:
+        if self._pending_nibble is None:
+            return ""
+        return f"{self._pending_nibble:X}"
+
     def set_buffer(self, buffer: Buffer | None) -> None:
         self._buffer = buffer
         self._offset = 0
         self._cursor = 0
         self._search_results.clear()
         self._search_current = None
+        self._mode = EditMode.VIEW
+        self._pending_nibble = None
         self.refresh_view()
 
     @property
@@ -84,6 +107,37 @@ class HexView(Static):
         self._search_current = None
         self.refresh_view()
 
+    def set_mode(self, mode: EditMode) -> None:
+        self._mode = mode
+        self._pending_nibble = None
+        self.refresh_view()
+
+    def _apply_byte(self, byte: int) -> None:
+        if not self._buffer:
+            return
+        size = self._buffer.size
+        if self._mode == EditMode.REPLACE:
+            if self._cursor >= size:
+                self.app.notify("Cannot replace beyond end of file", severity="warning")
+                return
+            self._buffer.replace(self._cursor, 1, bytes([byte]))
+        elif self._mode == EditMode.INSERT:
+            self._buffer.replace(self._cursor, 0, bytes([byte]))
+        else:
+            return
+        self._cursor += 1
+        self._ensure_visible()
+
+    def _handle_hex_digit(self, char: str) -> None:
+        value = int(char, 16)
+        if self._pending_nibble is None:
+            self._pending_nibble = value
+        else:
+            byte = (self._pending_nibble << 4) | value
+            self._pending_nibble = None
+            self._apply_byte(byte)
+        self.refresh_view()
+
     def refresh_view(self) -> None:
         if not self._buffer:
             self.update("No file open")
@@ -110,7 +164,12 @@ class HexView(Static):
                 abs_offset = row_offset + col
                 style = ""
                 if abs_offset == self._cursor:
-                    style = "reverse"
+                    if self._mode == EditMode.REPLACE:
+                        style = "bold black on red"
+                    elif self._mode == EditMode.INSERT:
+                        style = "bold black on green"
+                    else:
+                        style = "reverse"
                 elif abs_offset == self._search_current:
                     style = "bold magenta on yellow"
                 elif abs_offset in self._search_results:
@@ -143,6 +202,17 @@ class HexView(Static):
     def on_key(self, event: Key) -> None:
         if not self._buffer:
             return
+
+        # Editing input (only active in REPLACE / INSERT modes).
+        if (
+            len(event.key) == 1
+            and event.key in "0123456789abcdefABCDEF"
+            and self._mode in (EditMode.REPLACE, EditMode.INSERT)
+        ):
+            self._handle_hex_digit(event.key)
+            event.stop()
+            return
+
         bpr = self.BYTES_PER_ROW
         if event.key == "left":
             self.move_cursor(-1)
@@ -164,6 +234,18 @@ class HexView(Static):
             self._cursor = max(0, self._buffer.size - 1)
             self._ensure_visible()
             self.refresh_view()
+        elif event.key == "e":
+            if self._mode == EditMode.REPLACE:
+                self.set_mode(EditMode.VIEW)
+            else:
+                self.set_mode(EditMode.REPLACE)
+        elif event.key == "insert":
+            if self._mode == EditMode.INSERT:
+                self.set_mode(EditMode.VIEW)
+            else:
+                self.set_mode(EditMode.INSERT)
+        elif event.key == "escape":
+            self.set_mode(EditMode.VIEW)
         else:
             return
         event.stop()

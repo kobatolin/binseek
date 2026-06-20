@@ -13,6 +13,11 @@ A fast, keyboard-driven **TUI binary file viewer, searcher and editor**.
 
 - Open files of any size via memory mapping
 - Hex + ASCII page view with keyboard navigation
+- Direct editing modes:
+  - **VIEW** (default): navigate
+  - **REPLACE** (`E`): type two hex digits to overwrite the byte under the cursor
+  - **INSERT** (`Insert`): type two hex digits to insert a new byte at the cursor
+  - Press `Esc` to return to VIEW mode
 - Find bytes (hex or text) with result highlighting
 - Replace single or all occurrences
 - Go to absolute offset
@@ -29,6 +34,9 @@ A fast, keyboard-driven **TUI binary file viewer, searcher and editor**.
 | `F3` / `Shift+F3` | Next / previous result |
 | `Ctrl+H` | Replace |
 | `Ctrl+G` | Go to offset |
+| `E` | Toggle REPLACE mode |
+| `Insert` | Toggle INSERT mode |
+| `Esc` | Return to VIEW mode |
 | `Ctrl+Q` | Quit |
 | Arrows / PageUp / PageDown | Navigate hex view |
 

@@ -6,17 +6,23 @@
 #include <algorithm>
 #include <cstdint>
 #include <cstddef>
+#include <cstdio>
 #include <cstring>
 #include <string>
 #include <vector>
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 struct BsCore {
+    std::string path;
     MmapFile file;
     Editor editor;
     std::string error;
 
-    explicit BsCore(MmapFile&& f)
-        : file(std::move(f)), editor(&file)
+    BsCore(MmapFile&& f, const char* p)
+        : path(p), file(std::move(f)), editor(&file)
     {
     }
 };
@@ -45,7 +51,7 @@ bs_handle_t bs_open(const char* path) {
         set_error(file.error().c_str());
         return nullptr;
     }
-    return new BsCore(std::move(file));
+    return new BsCore(std::move(file), path);
 }
 
 void bs_close(bs_handle_t handle) {
@@ -162,10 +168,42 @@ int bs_save(bs_handle_t handle, const char* out_path) {
         core->error = "file not open";
         return -1;
     }
+
     std::string error;
-    if (!core->editor.save(out_path, error)) {
+    if (core->path != out_path) {
+        if (!core->editor.save(out_path, error)) {
+            core->error = error;
+            return -1;
+        }
+        return 0;
+    }
+
+    // In-place save: write to temp, close mapping, move temp over original, reopen.
+    std::string temp_path = std::string(out_path) + ".bs_tmp";
+    if (!core->editor.save(temp_path.c_str(), error)) {
         core->error = error;
         return -1;
     }
+
+    core->file.close();
+
+#ifdef _WIN32
+    bool moved = MoveFileExA(temp_path.c_str(), out_path, MOVEFILE_REPLACE_EXISTING) != 0;
+#else
+    bool moved = std::rename(temp_path.c_str(), out_path) == 0;
+#endif
+    if (!moved) {
+        core->error = "failed to move temp file to target";
+        // Best-effort reopen so the handle remains usable for reading.
+        core->file.open(out_path);
+        return -1;
+    }
+
+    if (!core->file.open(out_path)) {
+        core->error = core->file.error();
+        return -1;
+    }
+
+    core->editor = Editor(&core->file);
     return 0;
 }

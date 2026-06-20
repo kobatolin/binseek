@@ -83,10 +83,12 @@ class BinseekApp(App[None]):
             return
         hex_view = self.query_one(HexView)
         status.update_status(
+            mode=hex_view.edit_mode if hex_view else "VIEW",
             path=str(self._buffer.path),
             size=self._buffer.size,
             offset=hex_view.cursor if hex_view else 0,
             dirty=self._buffer.dirty,
+            pending=hex_view.pending_str if hex_view else "",
         )
 
     def _do_open(self, path: Path) -> None:
