@@ -27,17 +27,20 @@ A fast, keyboard-driven **TUI binary file viewer, searcher and editor**.
 
 | Key | Action |
 |---|---|
-| `Ctrl+O` | Open file |
-| `Ctrl+S` | Save |
-| `Ctrl+Shift+S` | Save As |
-| `Ctrl+F` | Find |
-| `F3` / `Shift+F3` | Next / previous result |
-| `Ctrl+H` | Replace |
-| `Ctrl+G` | Go to offset |
+| `F1` | Help |
+| `F2` | Open file |
+| `F3` | Find |
+| `F4` | Save |
+| `F5` | Save As |
+| `F6` | Replace |
+| `F7` | Go to offset |
+| `F8` | Quit |
+| `F9` / `Shift+F9` | Next / previous result |
+| `Ctrl+O` / `Ctrl+S` / `Ctrl+Shift+S` | Open / Save / Save As |
+| `Ctrl+F` / `Ctrl+H` / `Ctrl+G` / `Ctrl+Q` | Find / Replace / Goto / Quit |
 | `E` | Toggle REPLACE mode |
 | `Insert` | Toggle INSERT mode |
 | `Esc` | Return to VIEW mode |
-| `Ctrl+Q` | Quit |
 | Arrows / PageUp / PageDown | Navigate hex view |
 
 ## Build

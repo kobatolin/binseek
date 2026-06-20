@@ -25,7 +25,7 @@ class MenuBar(Horizontal):
         padding: 0 1;
     }
     MenuButton {
-        min-width: 8;
+        min-width: 12;
         height: auto;
         border: none;
         background: $surface;
@@ -39,14 +39,14 @@ class MenuBar(Horizontal):
     """
 
     def compose(self) -> ComposeResult:
-        yield MenuButton("Open", id="btn-open")
-        yield MenuButton("Save", id="btn-save")
-        yield MenuButton("Save As", id="btn-save-as")
-        yield MenuButton("Find", id="btn-find")
-        yield MenuButton("Replace", id="btn-replace")
-        yield MenuButton("Goto", id="btn-goto")
-        yield MenuButton("Help", id="btn-help")
-        yield MenuButton("Quit", id="btn-quit")
+        yield MenuButton("Open [F2]", id="btn-open")
+        yield MenuButton("Save [F4]", id="btn-save")
+        yield MenuButton("Save As [F5]", id="btn-save-as")
+        yield MenuButton("Find [F3]", id="btn-find")
+        yield MenuButton("Replace [F6]", id="btn-replace")
+        yield MenuButton("Goto [F7]", id="btn-goto")
+        yield MenuButton("Help [F1]", id="btn-help")
+        yield MenuButton("Quit [F8]", id="btn-quit")
 
     async def on_button_pressed(self, event: Button.Pressed) -> None:
         mapping = {

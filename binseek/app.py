@@ -45,14 +45,24 @@ class BinseekApp(App[None]):
     """
 
     BINDINGS = [
+        # Function keys (added without removing existing shortcuts)
+        Binding("f1", "help", "Help"),
+        Binding("f2", "open", "Open"),
+        Binding("f3", "find", "Find"),
+        Binding("f4", "save", "Save"),
+        Binding("f5", "save_as", "Save As"),
+        Binding("f6", "replace", "Replace"),
+        Binding("f7", "goto", "Goto"),
+        Binding("f8", "quit", "Quit"),
+        Binding("f9", "find_next", "Find Next"),
+        Binding("shift+f9", "find_prev", "Find Prev"),
+        # Original control shortcuts
         Binding("ctrl+o", "open", "Open"),
         Binding("ctrl+s", "save", "Save"),
         Binding("ctrl+shift+s", "save_as", "Save As"),
         Binding("ctrl+f", "find", "Find"),
         Binding("ctrl+h", "replace", "Replace"),
         Binding("ctrl+g", "goto", "Goto"),
-        Binding("f3", "find_next", "Find Next"),
-        Binding("shift+f3", "find_prev", "Find Prev"),
         Binding("ctrl+q", "quit", "Quit"),
     ]
 

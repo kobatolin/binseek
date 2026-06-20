@@ -8,21 +8,31 @@ from textual.screen import ModalScreen
 from textual.widgets import Button, Label, Static
 
 
-HELP_TEXT = """Navigation
-  Arrows / PageUp / PageDown    Move cursor
-  Home / End                    Go to start / end of file
-  Ctrl+G                        Go to offset
+HELP_TEXT = """Menu (function keys)
+  F1                            Help
+  F2                            Open
+  F3                            Find
+  F4                            Save
+  F5                            Save As
+  F6                            Replace
+  F7                            Goto
+  F8                            Quit
 
-File
-  Ctrl+O                        Open file
+Original control shortcuts
+  Ctrl+O                        Open
   Ctrl+S                        Save
   Ctrl+Shift+S                  Save As
+  Ctrl+F                        Find
+  Ctrl+H                        Replace
+  Ctrl+G                        Goto
   Ctrl+Q                        Quit
 
-Search & Replace
-  Ctrl+F                        Find
-  F3 / Shift+F3                 Next / previous result
-  Ctrl+H                        Replace dialog
+Navigation
+  Arrows / PageUp / PageDown    Move cursor
+  Home / End                    Go to start / end of file
+
+Search results
+  F9 / Shift+F9                 Next / previous result
 
 Editing
   E                             Toggle REPLACE mode
