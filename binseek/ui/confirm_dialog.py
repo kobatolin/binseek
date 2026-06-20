@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical
+from textual.events import Key
 from textual.screen import ModalScreen
 from textual.widgets import Button, Label
 
@@ -32,6 +33,10 @@ class ConfirmDialog(ModalScreen[str | None]):
     ConfirmDialog Button {
         margin: 0 1;
     }
+    ConfirmDialog Button:focus {
+        background-tint: $foreground 25%;
+        text-style: bold;
+    }
     """
 
     def __init__(
@@ -52,6 +57,34 @@ class ConfirmDialog(ModalScreen[str | None]):
                 yield Button(self.save_text, variant="primary", id="save")
                 yield Button(self.discard_text, id="discard")
                 yield Button("Cancel", id="cancel")
+
+    def on_mount(self) -> None:
+        buttons = list(self.query("Horizontal Button"))
+        if buttons:
+            buttons[0].focus()
+
+    def _buttons(self) -> list[Button]:
+        return list(self.query("Horizontal > Button"))
+
+    def _move_button_focus(self, delta: int) -> None:
+        buttons = self._buttons()
+        if not buttons:
+            return
+        try:
+            current = buttons.index(self.screen.focused)
+        except (ValueError, TypeError):
+            current = 0
+        else:
+            current = max(0, min(len(buttons) - 1, current + delta))
+        buttons[current].focus()
+
+    def key_left(self, event: Key) -> None:
+        self._move_button_focus(-1)
+        event.stop()
+
+    def key_right(self, event: Key) -> None:
+        self._move_button_focus(1)
+        event.stop()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "save":
