@@ -15,12 +15,18 @@
 
 ## 依赖
 - Textual 需要通过 pip 安装（见 `requirements.txt`）。
+- 开发依赖（pytest）见 `requirements-dev.txt`。
 - C++ 核心不依赖第三方库，仅使用 C++17 标准库。
 
 ## 跨平台
 - C++ 共享库在 Windows 上静态链接 `libgcc` / `libstdc++`，减少运行时依赖。
 - Python 侧通过 `sys.platform` 判断加载 `.so` 或 `.dll`。
 
-## 待补充
+## 已解决
+- Windows 下 pytest 退出时的段错误：由 `thread_local std::string` 析构引起，已改为固定长度 `thread_local char[]` 错误缓冲区。
+
+## 待补充 / 限制
+- 搜索当前基于原始文件内容；对已编辑（未保存）的插入/删除内容不会出现在搜索结果中。
 - 搜索的 Regex 支持尚未实现（当前仅支持 bytes / hex string）。
-- 大文件搜索时是否需要流式结果/分页展示待评估。
+- 大文件搜索时结果数有上限（默认 1000），Replace All 目前也受此上限影响。
+- 十六进制视图目前是固定页大小（256 字节），未根据终端高度动态调整。
