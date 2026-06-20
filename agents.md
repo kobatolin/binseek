@@ -13,6 +13,7 @@
 4. 新增功能时应同步补充 pytest 测试，关键 C++ 算法应在 `tests/cpp/` 加小型自测。
 5. 保持跨平台：路径处理使用 `pathlib`；C++ 中使用 `#ifdef _WIN32` 区分 Windows 与 POSIX。
 6. 不要引入不必要的依赖；C++ 侧尽量只使用标准库。
+7. 功能阶段完成后提交git commit，并更新文档。
 
 ## 常用命令
 ```bash
@@ -32,3 +33,7 @@ python -m binseek [file]
 ## 代码风格
 - Python：PEP 8，类型注解可选。
 - C++：C++17，清晰的分文件头/源结构，C API 函数使用 `bs_` 前缀。
+
+## 项目文档
+- `issue.md` 记录已知问题和注意事项。
+- `project.md` 项目规划。
