@@ -10,6 +10,7 @@ from textual.events import Key
 from rich.text import Text
 
 from binseek.model.buffer import Buffer
+from binseek.ui.help_dialog import HelpDialog
 
 
 class EditMode(Enum):
@@ -246,6 +247,9 @@ class HexView(Static):
                 self.set_mode(EditMode.INSERT)
         elif event.key == "escape":
             self.set_mode(EditMode.VIEW)
+        elif event.key == "h" and self._mode == EditMode.VIEW:
+            self.app.push_screen(HelpDialog())
+            return
         else:
             return
         event.stop()

@@ -45,6 +45,7 @@ class MenuBar(Horizontal):
         yield MenuButton("Find", id="btn-find")
         yield MenuButton("Replace", id="btn-replace")
         yield MenuButton("Goto", id="btn-goto")
+        yield MenuButton("Help", id="btn-help")
         yield MenuButton("Quit", id="btn-quit")
 
     async def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -55,6 +56,7 @@ class MenuBar(Horizontal):
             "btn-find": "find",
             "btn-replace": "replace",
             "btn-goto": "goto",
+            "btn-help": "help",
             "btn-quit": "quit",
         }
         action = mapping.get(event.button.id)

@@ -10,8 +10,10 @@ from textual.containers import Vertical
 from textual.binding import Binding
 
 from binseek.model.buffer import Buffer, CoreError
+from binseek.ui.confirm_dialog import ConfirmDialog
 from binseek.ui.find_dialog import FindDialog
 from binseek.ui.goto_dialog import GotoDialog
+from binseek.ui.help_dialog import HelpDialog
 from binseek.ui.hex_view import HexView
 from binseek.ui.input_dialog import InputDialog
 from binseek.ui.menu_bar import MenuBar
@@ -244,11 +246,38 @@ class BinseekApp(App[None]):
 
         self.push_screen(GotoDialog(), on_offset)
 
-    def action_quit(self) -> None:
+    def action_help(self) -> None:
+        self.push_screen(HelpDialog())
+
+    def _do_exit(self) -> None:
         if self._buffer:
             self._buffer.close()
             self._buffer = None
         self.exit()
+
+    def action_quit(self) -> None:
+        if not self._buffer or not self._buffer.dirty:
+            self._do_exit()
+            return
+
+        def on_choice(choice: str | None) -> None:
+            if choice == "save":
+                try:
+                    self._buffer.save()
+                except CoreError as exc:
+                    self.notify(f"Save failed: {exc}", severity="error")
+                    return
+                self.refresh_status()
+                self.notify(f"Saved {self._buffer.path}")
+                self._do_exit()
+            elif choice == "discard":
+                self._do_exit()
+            # Cancel: do nothing
+
+        self.push_screen(
+            ConfirmDialog("File has unsaved changes. What would you like to do?"),
+            on_choice,
+        )
 
 
 def main() -> None:
