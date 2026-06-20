@@ -179,8 +179,26 @@ class HexView(Static):
             return
 
         size = self._buffer.size
+        append_cursor = self._mode == EditMode.INSERT and self._cursor == size
+        placeholder_style = "bold black on green"
+
         if size == 0:
-            self.update("Empty file")
+            if not append_cursor:
+                self.update("Empty file")
+                return
+            # INSERT cursor in an empty file: render a single placeholder row.
+            text = Text()
+            line = Text()
+            line.append("00000000  ", style="bold cyan")
+            line.append("__ ", style=placeholder_style)
+            line.append("   " * (self.BYTES_PER_ROW - 1))
+            line.append(" |")
+            line.append(" ", style=placeholder_style)
+            line.append(" " * (self.BYTES_PER_ROW - 1))
+            line.append("|")
+            text.append(line)
+            self.update(text)
+            self.app.refresh_status()
             return
 
         data = self._buffer.read(self._offset, min(self.page_size, size - self._offset))
@@ -213,10 +231,18 @@ class HexView(Static):
                 ch = chr(byte) if 32 <= byte < 127 else "."
                 ascii_chars.append((ch, style))
 
+            # Highlight the append position in INSERT mode.
+            row_end = row_offset + len(row_data)
+            if append_cursor and size % self.BYTES_PER_ROW != 0 and row_end == size:
+                hex_parts.append(("__ ", placeholder_style))
+                ascii_chars.append((" ", placeholder_style))
+
             for part, style in hex_parts:
                 line.append(part, style=style)
             missing = self.BYTES_PER_ROW - len(row_data)
-            line.append("   " * missing)
+            if append_cursor and row_end == size:
+                missing -= 1
+            line.append("   " * max(missing, 0))
             line.append(" |")
             for ch, style in ascii_chars:
                 line.append(ch, style=style)
@@ -224,6 +250,21 @@ class HexView(Static):
             text.append(line)
             if row + 1 < self._page_rows and row_offset + self.BYTES_PER_ROW < size:
                 text.append("\n")
+
+        # If the append cursor is at a row boundary, render a full empty row.
+        if append_cursor and size % self.BYTES_PER_ROW == 0 and self._offset <= size < self._offset + self.page_size:
+            if text:
+                text.append("\n")
+            line = Text()
+            line.append(f"{size:08X}  ", style="bold cyan")
+            line.append("__ ", style=placeholder_style)
+            line.append("   " * (self.BYTES_PER_ROW - 1))
+            line.append(" |")
+            line.append(" ", style=placeholder_style)
+            line.append(" " * (self.BYTES_PER_ROW - 1))
+            line.append("|")
+            text.append(line)
+
         self.update(text)
         self.app.refresh_status()
 
