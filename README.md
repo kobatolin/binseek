@@ -95,6 +95,8 @@ Start binseek:
 
 ```bash
 python -m binseek [file]
+binseek --help
+binseek --version
 ```
 
 ## Test

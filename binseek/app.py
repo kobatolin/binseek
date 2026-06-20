@@ -353,9 +353,25 @@ class BinseekApp(App[None]):
 
 
 def main() -> None:
+    import argparse
     import sys
 
-    app = BinseekApp(sys.argv[1] if len(sys.argv) > 1 else None)
+    from binseek import __version__
+
+    parser = argparse.ArgumentParser(
+        prog="binseek",
+        description="A TUI binary file viewer, searcher and editor.",
+    )
+    parser.add_argument("file", nargs="?", help="file to open")
+    parser.add_argument(
+        "-v",
+        "--version",
+        action="version",
+        version=f"%(prog)s {__version__}",
+    )
+    args = parser.parse_args()
+
+    app = BinseekApp(args.file)
     app.run()
 
 
