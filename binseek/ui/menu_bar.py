@@ -26,9 +26,15 @@ class MenuBar(Horizontal):
     }
     MenuButton {
         min-width: 8;
-        height: 1;
+        height: auto;
         border: none;
+        background: $surface;
+        color: $text;
+        padding: 0 1;
         content-align: center middle;
+    }
+    MenuButton:hover {
+        background: $surface-lighten-1;
     }
     """
 
@@ -41,7 +47,7 @@ class MenuBar(Horizontal):
         yield MenuButton("Goto", id="btn-goto")
         yield MenuButton("Quit", id="btn-quit")
 
-    def on_button_pressed(self, event: Button.Pressed) -> None:
+    async def on_button_pressed(self, event: Button.Pressed) -> None:
         mapping = {
             "btn-open": "open",
             "btn-save": "save",
@@ -53,4 +59,4 @@ class MenuBar(Horizontal):
         }
         action = mapping.get(event.button.id)
         if action:
-            self.app.action(action)
+            await self.app.run_action(action)
