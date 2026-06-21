@@ -57,6 +57,7 @@ def _build_help_text() -> str:
         ("E", "Toggle REPLACE"),
         ("Insert", "Toggle INSERT"),
         ("Delete", "Delete byte"),
+        ("Tab", "Switch Hex/ASCII"),
         ("Esc", "Return to VIEW"),
     ]
     key_width = 13

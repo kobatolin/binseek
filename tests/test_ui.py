@@ -375,3 +375,324 @@ def test_page_down_does_not_jump_to_end() -> None:
         if app._buffer:
             app._buffer.close()
         os.unlink(path)
+
+
+def test_tab_toggles_hex_ascii_workspace() -> None:
+    with tempfile.NamedTemporaryFile(delete=False) as f:
+        f.write(b"ABCDEFGH")
+        path = f.name
+
+    app = BinseekApp(path)
+
+    async def _run() -> None:
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            hex_view = app.query_one("#hex")
+            assert hex_view.workspace == "HEX"
+
+            # Tab only switches workspace in edit mode
+            await pilot.press("tab")
+            await pilot.pause()
+            assert hex_view.workspace == "HEX"
+
+            await pilot.press("e")  # enter REPLACE mode
+            await pilot.pause()
+            await pilot.press("tab")
+            await pilot.pause()
+            assert hex_view.workspace == "ASCII"
+
+            await pilot.press("tab")
+            await pilot.pause()
+            assert hex_view.workspace == "HEX"
+
+    try:
+        asyncio.run(_run())
+    finally:
+        if app._buffer:
+            app._buffer.close()
+        os.unlink(path)
+
+
+def test_ascii_replace_edits_byte() -> None:
+    with tempfile.NamedTemporaryFile(delete=False) as f:
+        f.write(b"ABCDEFGH")
+        path = f.name
+
+    app = BinseekApp(path)
+
+    async def _run() -> None:
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            hex_view = app.query_one("#hex")
+            await pilot.press("l", "l")  # cursor at 'C' (offset 2)
+            await pilot.pause()
+            assert hex_view.cursor == 2
+
+            await pilot.press("e")  # enter REPLACE mode
+            await pilot.pause()
+            assert hex_view.edit_mode == "REPLACE"
+
+            await pilot.press("tab")  # switch to ASCII workspace
+            await pilot.pause()
+            assert hex_view.workspace == "ASCII"
+
+            await pilot.press("z")  # replace byte at cursor with 'z'
+            await pilot.pause()
+            assert app._buffer.read(0, 8) == b"ABzDEFGH"
+            assert hex_view.cursor == 3
+
+    try:
+        asyncio.run(_run())
+    finally:
+        if app._buffer:
+            app._buffer.close()
+        os.unlink(path)
+
+
+def test_ascii_insert_inserts_byte() -> None:
+    with tempfile.NamedTemporaryFile(delete=False) as f:
+        f.write(b"ABCDEFGH")
+        path = f.name
+
+    app = BinseekApp(path)
+
+    async def _run() -> None:
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            hex_view = app.query_one("#hex")
+
+            await pilot.press("insert")  # enter INSERT mode
+            await pilot.pause()
+            assert hex_view.edit_mode == "INSERT"
+
+            await pilot.press("tab")  # switch to ASCII workspace
+            await pilot.pause()
+            assert hex_view.workspace == "ASCII"
+
+            await pilot.press("z")  # insert 'z' at cursor
+            await pilot.pause()
+            assert app._buffer.size == 9
+            assert app._buffer.read(0, 9) == b"zABCDEFGH"
+            assert hex_view.cursor == 1
+
+    try:
+        asyncio.run(_run())
+    finally:
+        if app._buffer:
+            app._buffer.close()
+        os.unlink(path)
+
+
+def test_ascii_workspace_forces_byte_mode() -> None:
+    with tempfile.NamedTemporaryFile(delete=False) as f:
+        f.write(b"\x12\x34\x56\x78\x9A\xBC\xDE\xF0")
+        path = f.name
+
+    app = BinseekApp(path)
+
+    async def _run() -> None:
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            hex_view = app.query_one("#hex")
+            await pilot.press("4")
+            await pilot.pause()
+            assert hex_view.display_mode == "4B"
+
+            await pilot.press("e")  # enter REPLACE mode
+            await pilot.pause()
+            await pilot.press("tab")
+            await pilot.pause()
+            assert hex_view.workspace == "ASCII"
+            assert hex_view.display_mode == "1B"
+
+    try:
+        asyncio.run(_run())
+    finally:
+        if app._buffer:
+            app._buffer.close()
+        os.unlink(path)
+
+
+def test_non_printable_ignored_in_ascii_workspace() -> None:
+    with tempfile.NamedTemporaryFile(delete=False) as f:
+        f.write(b"ABCDEFGH")
+        path = f.name
+
+    app = BinseekApp(path)
+
+    async def _run() -> None:
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            hex_view = app.query_one("#hex")
+            await pilot.press("e", "tab")
+            await pilot.pause()
+            assert hex_view.workspace == "ASCII"
+            assert hex_view.edit_mode == "REPLACE"
+
+            original = app._buffer.read(0, 8)
+            await pilot.press("escape")  # Escape is not printable
+            await pilot.pause()
+            assert app._buffer.read(0, 8) == original
+
+    try:
+        asyncio.run(_run())
+    finally:
+        if app._buffer:
+            app._buffer.close()
+        os.unlink(path)
+
+
+def test_digits_are_ascii_input_in_ascii_workspace() -> None:
+    with tempfile.NamedTemporaryFile(delete=False) as f:
+        f.write(b"ABCDEFGH")
+        path = f.name
+
+    app = BinseekApp(path)
+
+    async def _run() -> None:
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            hex_view = app.query_one("#hex")
+            await pilot.press("e", "tab")
+            await pilot.pause()
+            assert hex_view.workspace == "ASCII"
+            assert hex_view.display_mode == "1B"
+
+            # In ASCII edit mode digits are typed, not display-mode switches
+            await pilot.press("2")
+            await pilot.pause()
+            assert hex_view.display_mode == "1B"
+            assert app._buffer.read(0, 1) == b"2"
+
+            # Switch back to HEX workspace and return to VIEW to change display mode
+            await pilot.press("tab")
+            await pilot.pause()
+            assert hex_view.workspace == "HEX"
+
+            await pilot.press("escape")
+            await pilot.pause()
+            assert hex_view.edit_mode == "VIEW"
+
+            await pilot.press("2")
+            await pilot.pause()
+            assert hex_view.display_mode == "2B"
+
+    try:
+        asyncio.run(_run())
+    finally:
+        if app._buffer:
+            app._buffer.close()
+        os.unlink(path)
+
+
+def test_ascii_input_overrides_shortcuts_in_edit_mode() -> None:
+    with tempfile.NamedTemporaryFile(delete=False) as f:
+        f.write(b"A" * 256)
+        path = f.name
+
+    app = BinseekApp(path)
+
+    async def _run() -> None:
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            hex_view = app.query_one("#hex")
+            await pilot.press("e")  # enter REPLACE mode
+            await pilot.press("tab")  # switch to ASCII workspace
+            await pilot.pause()
+            assert hex_view.workspace == "ASCII"
+            assert hex_view.edit_mode == "REPLACE"
+            assert hex_view.cursor == 0
+
+            # In ASCII edit mode h/j/k/l are typed as ASCII, not navigation
+            await pilot.press("h")
+            await pilot.pause()
+            assert app._buffer.read(0, 1) == b"h"
+            assert hex_view.cursor == 1
+
+            await pilot.press("j")
+            await pilot.pause()
+            assert app._buffer.read(1, 1) == b"j"
+            assert hex_view.cursor == 2
+
+            # Arrows still navigate
+            await pilot.press("left")
+            await pilot.pause()
+            assert hex_view.cursor == 1
+            await pilot.press("down")
+            await pilot.pause()
+            assert hex_view.cursor == 1 + hex_view.BYTES_PER_ROW
+
+    try:
+        asyncio.run(_run())
+    finally:
+        if app._buffer:
+            app._buffer.close()
+        os.unlink(path)
+
+
+def test_status_bar_shows_workspace() -> None:
+    with tempfile.NamedTemporaryFile(delete=False) as f:
+        f.write(b"ABCDEFGH")
+        path = f.name
+
+    app = BinseekApp(path)
+
+    async def _run() -> None:
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            status = app.query_one("#status")
+            content = str(status._Static__content)
+            assert "HEX" in content
+            assert "ASCII" not in content
+
+            await pilot.press("e", "tab")
+            await pilot.pause()
+            content = str(status._Static__content)
+            assert "ASCII" in content
+
+    try:
+        asyncio.run(_run())
+    finally:
+        if app._buffer:
+            app._buffer.close()
+        os.unlink(path)
+
+
+def test_tab_does_not_switch_workspace_in_view_mode() -> None:
+    with tempfile.NamedTemporaryFile(delete=False) as f:
+        f.write(b"ABCDEFGH")
+        path = f.name
+
+    app = BinseekApp(path)
+
+    async def _run() -> None:
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            hex_view = app.query_one("#hex")
+            assert hex_view.edit_mode == "VIEW"
+            assert hex_view.workspace == "HEX"
+
+            await pilot.press("tab")
+            await pilot.pause()
+            assert hex_view.workspace == "HEX"
+
+            await pilot.press("e")
+            await pilot.pause()
+            assert hex_view.edit_mode == "REPLACE"
+
+            await pilot.press("tab")
+            await pilot.pause()
+            assert hex_view.workspace == "ASCII"
+
+            # Escape returns to VIEW mode and HEX workspace
+            await pilot.press("escape")
+            await pilot.pause()
+            assert hex_view.edit_mode == "VIEW"
+            assert hex_view.workspace == "HEX"
+
+    try:
+        asyncio.run(_run())
+    finally:
+        if app._buffer:
+            app._buffer.close()
+        os.unlink(path)

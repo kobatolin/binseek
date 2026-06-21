@@ -20,6 +20,11 @@ class EditMode(Enum):
     INSERT = auto()
 
 
+class EditWorkspace(Enum):
+    HEX = auto()
+    ASCII = auto()
+
+
 class DisplayMode(Enum):
     BYTE = 1
     WORD = 2
@@ -58,6 +63,7 @@ class HexView(Static):
         self._search_results: Set[int] = set()
         self._search_current: Optional[int] = None
         self._mode = EditMode.VIEW
+        self._workspace = EditWorkspace.HEX
         self._pending_value = 0
         self._pending_nibbles = 0
         self._page_rows = 16
@@ -75,6 +81,10 @@ class HexView(Static):
     @property
     def edit_mode(self) -> str:
         return self._mode.name
+
+    @property
+    def workspace(self) -> str:
+        return self._workspace.name
 
     @property
     def display_mode(self) -> str:
@@ -97,6 +107,7 @@ class HexView(Static):
         self._search_results.clear()
         self._search_current = None
         self._mode = EditMode.VIEW
+        self._workspace = EditWorkspace.HEX
         self._pending_value = 0
         self._pending_nibbles = 0
         self._display_mode = DisplayMode.BYTE
@@ -188,13 +199,31 @@ class HexView(Static):
 
     def set_mode(self, mode: EditMode) -> None:
         self._mode = mode
+        if self._mode == EditMode.VIEW:
+            self._workspace = EditWorkspace.HEX
         self._pending_value = 0
         self._pending_nibbles = 0
         self._align_cursor()
         self._ensure_visible()
         self.refresh_view()
 
+    def set_workspace(self, workspace: EditWorkspace) -> None:
+        self._workspace = workspace
+        if self._workspace == EditWorkspace.ASCII and self._display_mode != DisplayMode.BYTE:
+            self._display_mode = DisplayMode.BYTE
+        self._pending_value = 0
+        self._pending_nibbles = 0
+        self._align_cursor()
+        self._ensure_visible()
+        self.refresh_view()
+
+    def toggle_workspace(self) -> None:
+        new_workspace = EditWorkspace.ASCII if self._workspace == EditWorkspace.HEX else EditWorkspace.HEX
+        self.set_workspace(new_workspace)
+
     def set_display_mode(self, mode: DisplayMode) -> None:
+        if self._workspace == EditWorkspace.ASCII and mode != DisplayMode.BYTE:
+            self._workspace = EditWorkspace.HEX
         self._display_mode = mode
         self._pending_value = 0
         self._pending_nibbles = 0
@@ -243,8 +272,21 @@ class HexView(Static):
             self._pending_nibbles = 0
         self.refresh_view()
 
+    def _handle_ascii_char(self, char: str) -> None:
+        code = ord(char)
+        if not (32 <= code < 127):
+            return
+        self._apply_value(code)
+        self.refresh_view()
+
     def _style_for_offset(self, offset: int) -> str:
         if offset == self._cursor:
+            if self._workspace == EditWorkspace.ASCII:
+                if self._mode == EditMode.REPLACE:
+                    return "bold black on blue"
+                if self._mode == EditMode.INSERT:
+                    return "bold black on cyan"
+                return "reverse underline"
             if self._mode == EditMode.REPLACE:
                 return "bold black on red"
             if self._mode == EditMode.INSERT:
@@ -377,8 +419,18 @@ class HexView(Static):
             len(event.key) == 1
             and event.key in "0123456789abcdefABCDEF"
             and self._mode in (EditMode.REPLACE, EditMode.INSERT)
+            and self._workspace == EditWorkspace.HEX
         ):
             self._handle_hex_digit(event.key)
+            event.stop()
+            return
+
+        if (
+            len(event.key) == 1
+            and self._workspace == EditWorkspace.ASCII
+            and self._mode in (EditMode.REPLACE, EditMode.INSERT)
+        ):
+            self._handle_ascii_char(event.key)
             event.stop()
             return
 
@@ -424,6 +476,11 @@ class HexView(Static):
             self.refresh_view()
         elif event.key == "escape":
             self.set_mode(EditMode.VIEW)
+        elif event.key == "tab":
+            if self._mode in (EditMode.REPLACE, EditMode.INSERT):
+                self.toggle_workspace()
+            else:
+                return
         elif event.key == "1":
             self.set_display_mode(DisplayMode.BYTE)
         elif event.key == "2":

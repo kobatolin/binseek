@@ -9,9 +9,9 @@
 - 若要在 Windows 宿主侧直接调用，可执行 `wsl make ...` 或在 WSL 配置集成。
 
 ## Python 版本
-- WSL 默认环境中 `python3.13` 命令可能不存在，通常使用 `python3`（如 Ubuntu 24.04 为 3.12.3）。
+- 项目支持 Python 3.8+，开发时使用 `python3` 即可。
 - Windows 宿主侧已安装 `Python 3.13.5`。
-- `pyproject.toml` 已放宽为 `requires-python = ">=3.12"`，允许直接使用 WSL 默认 Python。
+- `pyproject.toml` 已放宽为 `requires-python = ">=3.8"`，允许直接使用 WSL 默认 Python。
 - 为避免覆盖 Windows `.venv`，WSL 使用独立的 `.venv-linux`：
   ```bash
   python3 -m venv .venv-linux
@@ -36,7 +36,7 @@
 - 搜索当前基于原始文件内容；对已编辑（未保存）的插入/删除内容不会出现在搜索结果中。
 - 搜索的 Regex 支持尚未实现（当前仅支持 bytes / hex string）。
 - 大文件搜索时结果数有上限（默认 1000），Replace All 目前也受此上限影响。
-- 编辑模式仅支持十六进制数字输入；不支持直接输入 ASCII 字符。
+- ~编辑模式仅支持十六进制数字输入；不支持直接输入 ASCII 字符。~ 已支持：按 `Tab` 切换 Hex/ASCII 工作区，ASCII 编辑仅在 1B 模式下生效。
 
 ## 长期规划
 - 编辑器模型可考虑重构为 **Piece Table**（或提供统一的逻辑视图 `Reader`/`Stream` 抽象）：

@@ -103,6 +103,7 @@ class BinseekApp(App[None]):
             pending=hex_view.pending_str if hex_view else "",
             display_mode=hex_view.display_mode if hex_view else "1B",
             endian=hex_view.endian if hex_view else "LE",
+            workspace=hex_view.workspace if hex_view else "HEX",
         )
 
     def _do_open(self, path: Path) -> None:
