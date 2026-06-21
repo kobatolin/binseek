@@ -6,7 +6,7 @@ A fast, keyboard-driven **TUI binary file viewer, searcher and editor**.
 - Cross-platform: x86-64 Windows & Linux
 - Menu bar + keyboard shortcuts
 - Large files open instantly via memory-mapped IO
-- Python 3.13 + [Textual](https://textual.textualize.io/) for the UI
+- Python 3.8+ + [Textual](https://textual.textualize.io/) for the UI
 - C++17 core for IO, search and edit operations, compiled as a shared library
 
 ## Features
@@ -74,15 +74,14 @@ wsl make windows
 Create a virtual environment and install the Python dependency:
 
 ```bash
-python3.13 -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
 ### WSL (Ubuntu)
 
-WSL usually ships with `python3` (e.g. 3.12) rather than `python3.13`. A
-separate Linux virtual environment is kept so the existing Windows `.venv`
+A separate Linux virtual environment is kept so the existing Windows `.venv`
 remains usable from the host:
 
 ```bash
@@ -117,7 +116,7 @@ make test PYTHON=.venv/bin/python3
 
 - Create a virtual environment before installing dependencies:
   ```bash
-  python3.13 -m venv .venv
+  python3 -m venv .venv
   .venv\Scripts\activate        # Windows
   # source .venv/bin/activate   # Linux/macOS
   pip install -r requirements-dev.txt
@@ -167,7 +166,7 @@ The output `dist/binseek-<version>-py3-none-any.whl` can be installed on either
 Windows or Linux; the correct shared library is loaded at runtime:
 
 ```bash
-pip install dist/binseek-0.1.0-py3-none-any.whl
+pip install dist/binseek-0.1.1-py3-none-any.whl
 binseek <file>
 ```
 

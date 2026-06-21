@@ -18,7 +18,7 @@
 ## 环境、测试与提交
 - 使用虚拟环境：
   ```bash
-  python3.13 -m venv .venv
+  python3 -m venv .venv
   .venv\Scripts\activate        # Windows
   # source .venv-linux/bin/activate  # WSL
   pip install -r requirements-dev.txt
@@ -54,7 +54,7 @@ wsl make linux
 pip install build
 python -m build --wheel --outdir dist
 ```
-产物位于 `dist/binseek-0.1.0-py3-none-any.whl`，可直接分发；安装后运行时会根据平台自动加载对应的共享库。
+产物位于 `dist/binseek-0.1.1-py3-none-any.whl`，可直接分发；安装后运行时会根据平台自动加载对应的共享库。
 
 ## 代码风格
 - Python：PEP 8，类型注解可选。

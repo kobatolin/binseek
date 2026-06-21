@@ -11,7 +11,7 @@
 ## 技术选型
 | 层级 | 选型 | 说明 |
 |---|---|---|
-| TUI | Python 3.13 + Textual | 原生菜单、对话框、快捷键，跨平台体验好 |
+| TUI | Python 3.8+ + Textual | 原生菜单、对话框、快捷键，跨平台体验好 |
 | 核心算法/IO | C++17 + ctypes C API | 独立共享库，避免 C++ ABI 问题 |
 | 构建 | 顶层 Makefile | `make linux` / `make windows` / `make test` / `make clean` |
 | 打包 | pyproject.toml + setuptools + `python -m build` | 标准 Python wheel，同时打包 Windows DLL 与 Linux so |
@@ -42,7 +42,7 @@ binseek/
 ## 开发工作流
 1. 创建并激活虚拟环境：
    ```bash
-   python3.13 -m venv .venv
+   python3 -m venv .venv
    .venv\Scripts\activate
    pip install -r requirements-dev.txt
    ```
@@ -69,7 +69,7 @@ binseek/
    pip install build
    python -m build --wheel --outdir dist
    ```
-3. 产物 `dist/binseek-0.1.0-py3-none-any.whl` 同时包含 `libcore.dll` 与 `libcore.so`，分发后用户可直接 `pip install` 使用。
+3. 产物 `dist/binseek-0.1.1-py3-none-any.whl` 同时包含 `libcore.dll` 与 `libcore.so`，分发后用户可直接 `pip install` 使用。
 
 ## 里程碑
 1. M0：仓库初始化 + Makefile + .gitignore
@@ -78,3 +78,4 @@ binseek/
 4. M3：Textual UI 骨架（菜单、hex 视图、状态栏）
 5. M4：查找/替换/跳转对话框
 6. M5：测试 + README + git commit
+7. M6：支持 ASCII 直接编辑（Hex/ASCII 工作区、Tab 切换、1B 限制）
