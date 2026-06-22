@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+from typing import Optional
+
 from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical
 from textual.screen import ModalScreen
@@ -10,7 +13,13 @@ from textual.widgets import Button, Checkbox, Input, Label
 from binseek.ui.utils import parse_pattern
 
 
-class FindDialog(ModalScreen[bytes | None]):
+@dataclass
+class FindRequest:
+    pattern: bytes
+    case_insensitive: bool = False
+
+
+class FindDialog(ModalScreen[Optional[FindRequest]]):
     """Dialog for entering a byte pattern to search."""
 
     DEFAULT_CSS = """
@@ -51,14 +60,16 @@ class FindDialog(ModalScreen[bytes | None]):
             yield Label("Find bytes:")
             yield Input(value=self.initial, id="pattern")
             yield Checkbox("Hex pattern", value=True, id="hex")
+            yield Checkbox("Case insensitive", value=False, id="case")
             yield Label("", id="error")
             with Horizontal():
                 yield Button("Find", variant="primary", id="find")
                 yield Button("Cancel", id="cancel")
 
-    def _parse(self) -> bytes | None:
+    def _parse(self) -> Optional[FindRequest]:
         pattern = self.query_one("#pattern", Input).value
         hex_mode = self.query_one("#hex", Checkbox).value
+        case_insensitive = self.query_one("#case", Checkbox).value
         error_label = self.query_one("#error", Label)
         try:
             data = parse_pattern(pattern, hex_mode)
@@ -69,20 +80,29 @@ class FindDialog(ModalScreen[bytes | None]):
             error_label.update("Error: pattern is empty")
             return None
         error_label.update("")
-        return data
+        if hex_mode:
+            case_insensitive = False
+        return FindRequest(data, case_insensitive)
+
+    def on_checkbox_changed(self, event: Checkbox.Changed) -> None:
+        if event.checkbox.id == "hex":
+            case_checkbox = self.query_one("#case", Checkbox)
+            case_checkbox.disabled = event.checkbox.value
+            if event.checkbox.value:
+                case_checkbox.value = False
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "find":
-            data = self._parse()
-            if data is not None:
-                self.dismiss(data)
+            request = self._parse()
+            if request is not None:
+                self.dismiss(request)
         else:
             self.dismiss(None)
 
     def on_input_submitted(self) -> None:
-        data = self._parse()
-        if data is not None:
-            self.dismiss(data)
+        request = self._parse()
+        if request is not None:
+            self.dismiss(request)
 
     def key_escape(self) -> None:
         self.dismiss(None)

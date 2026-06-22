@@ -12,7 +12,7 @@ from textual.binding import Binding
 from binseek.model.buffer import Buffer, CoreError
 from binseek.ui.confirm_dialog import ConfirmDialog
 from binseek.ui.file_dialog import FileDialog
-from binseek.ui.find_dialog import FindDialog
+from binseek.ui.find_dialog import FindDialog, FindRequest
 from binseek.ui.goto_dialog import GotoDialog
 from binseek.ui.help_dialog import HelpDialog
 from binseek.ui.hex_view import HexView
@@ -214,10 +214,12 @@ class BinseekApp(App[None]):
             on_path,
         )
 
-    def _do_find(self, pattern: bytes) -> None:
-        if not self._buffer:
+    def _do_find(self, request: Optional[FindRequest]) -> None:
+        if not self._buffer or request is None:
             return
-        results = self._buffer.search(pattern)
+        results = self._buffer.search(
+            request.pattern, case_insensitive=request.case_insensitive
+        )
         hex_view = self.query_one(HexView)
         if not results:
             hex_view.clear_search_results()
@@ -262,7 +264,7 @@ class BinseekApp(App[None]):
             return
         hex_view = self.query_one(HexView)
         if replace_all:
-            results = self._buffer.search(find, max_results=100_000)
+            results = self._buffer.search(find, max_results=100_000, case_insensitive=False)
             if not results:
                 self.notify("Pattern not found", severity="warning")
                 return
@@ -279,7 +281,7 @@ class BinseekApp(App[None]):
             # Replace the current search result, or find the first one.
             current = self._buffer.current_search_result()
             if current is None or self._buffer._last_pattern != find:
-                results = self._buffer.search(find)
+                results = self._buffer.search(find, case_insensitive=False)
                 if not results:
                     self.notify("Pattern not found", severity="warning")
                     return
@@ -291,7 +293,7 @@ class BinseekApp(App[None]):
                 self.notify(f"Replace failed: {exc}", severity="error")
                 return
             # Refresh search so the next replace moves on.
-            results = self._buffer.search(find)
+            results = self._buffer.search(find, case_insensitive=False)
             hex_view.set_search_results(results, offset)
             hex_view.refresh_view()
             self.refresh_status()

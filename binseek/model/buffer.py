@@ -47,11 +47,15 @@ class Buffer:
         return self._core.read_chunk(offset, length)
 
     def search(
-        self, pattern: bytes, start: int = 0, max_results: int = 1000
+        self,
+        pattern: bytes,
+        start: int = 0,
+        max_results: int = 1000,
+        case_insensitive: bool = False,
     ) -> List[Tuple[int, int]]:
         self._last_pattern = pattern
         self._search_results = self._core.search(
-            pattern, start=start, max_results=max_results
+            pattern, start=start, max_results=max_results, case_insensitive=case_insensitive
         )
         self._search_index = 0 if self._search_results else -1
         return self._search_results

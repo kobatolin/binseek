@@ -48,10 +48,19 @@ int main() {
     uint8_t pattern[] = {0x6C, 0x6C}; // "ll"
     bs_match_t results[8] = {};
     uint64_t count = 0;
-    assert(bs_search(h, pattern, 2, 0, 8, results, &count) == 0);
+    assert(bs_search(h, pattern, 2, 0, 8, 0, results, &count) == 0);
     assert(count == 1);
     assert(results[0].offset == 2);
     assert(results[0].length == 2);
+
+    // Case-insensitive ASCII search.
+    uint8_t ci_pattern[] = {0x57, 0x4F, 0x52, 0x4C, 0x44}; // "WORLD"
+    bs_match_t ci_results[8] = {};
+    uint64_t ci_count = 0;
+    assert(bs_search(h, ci_pattern, 5, 0, 8, 1, ci_results, &ci_count) == 0);
+    assert(ci_count == 1);
+    assert(ci_results[0].offset == 6);
+    assert(ci_results[0].length == 5);
 
     // Replace first "Hello" with "Hallo" (same length).
     uint8_t replacement[] = {0x48, 0x61, 0x6C, 0x6C, 0x6F};

@@ -110,6 +110,7 @@ int bs_search(
     uint64_t pattern_len,
     uint64_t start_offset,
     uint64_t max_results,
+    int case_insensitive,
     bs_match_t* results,
     uint64_t* result_count)
 {
@@ -130,7 +131,8 @@ int bs_search(
         pattern,
         pattern_len,
         start_offset,
-        max_results);
+        max_results,
+        case_insensitive != 0);
 
     *result_count = hits.size();
     for (size_t i = 0; i < hits.size(); ++i) {

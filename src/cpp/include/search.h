@@ -15,6 +15,7 @@ std::vector<bs_match_t> search_all(
     const uint8_t* pattern,
     uint64_t pattern_len,
     uint64_t start_offset,
-    uint64_t max_results);
+    uint64_t max_results,
+    bool case_insensitive = false);
 
 #endif

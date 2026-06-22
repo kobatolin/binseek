@@ -47,6 +47,10 @@ def test_search(sample_path: str) -> None:
         (32, 1),
         (36, 1),
     ]
+    results = buf.search(b"hello", case_insensitive=True)
+    assert results == [(0, 5)]
+    results = buf.search(b"HELLO", case_insensitive=True)
+    assert results == [(0, 5)]
     buf.close()
 
 

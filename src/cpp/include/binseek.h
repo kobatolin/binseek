@@ -33,6 +33,7 @@ BS_API int bs_search(
     uint64_t pattern_len,
     uint64_t start_offset,
     uint64_t max_results,
+    int case_insensitive,
     bs_match_t* results,
     uint64_t* result_count);
 

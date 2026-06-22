@@ -69,6 +69,7 @@ _lib.bs_search.argtypes = [
     ctypes.c_uint64,
     ctypes.c_uint64,
     ctypes.c_uint64,
+    ctypes.c_int,
     ctypes.POINTER(_BsMatch),
     ctypes.POINTER(ctypes.c_uint64),
 ]
@@ -146,7 +147,11 @@ class Core:
         return bytes(buf)
 
     def search(
-        self, pattern: bytes, start: int = 0, max_results: int = 1000
+        self,
+        pattern: bytes,
+        start: int = 0,
+        max_results: int = 1000,
+        case_insensitive: bool = False,
     ) -> List[Tuple[int, int]]:
         if not pattern:
             return []
@@ -163,6 +168,7 @@ class Core:
                 pattern_len,
                 start,
                 max_results,
+                1 if case_insensitive else 0,
                 results,
                 ctypes.byref(count),
             )
