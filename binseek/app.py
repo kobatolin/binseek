@@ -223,8 +223,8 @@ class BinseekApp(App[None]):
             hex_view.clear_search_results()
             self.notify("Pattern not found", severity="warning")
             return
-        hex_view.set_search_results(results, results[0])
-        hex_view.jump_to(results[0])
+        hex_view.set_search_results(results, results[0][0])
+        hex_view.jump_to(results[0][0])
         self.notify(f"Found {len(results)} occurrence(s)")
 
     def action_find(self) -> None:
@@ -236,10 +236,11 @@ class BinseekApp(App[None]):
     def action_find_next(self) -> None:
         if not self._buffer:
             return
-        offset = self._buffer.search_next()
-        if offset is None:
+        match = self._buffer.search_next()
+        if match is None:
             self.notify("No more occurrences", severity="warning")
             return
+        offset, _length = match
         hex_view = self.query_one(HexView)
         hex_view.set_search_results(self._buffer._search_results, offset)
         hex_view.jump_to(offset)
@@ -247,10 +248,11 @@ class BinseekApp(App[None]):
     def action_find_prev(self) -> None:
         if not self._buffer:
             return
-        offset = self._buffer.search_prev()
-        if offset is None:
+        match = self._buffer.search_prev()
+        if match is None:
             self.notify("No previous occurrences", severity="warning")
             return
+        offset, _length = match
         hex_view = self.query_one(HexView)
         hex_view.set_search_results(self._buffer._search_results, offset)
         hex_view.jump_to(offset)
@@ -264,9 +266,9 @@ class BinseekApp(App[None]):
             if not results:
                 self.notify("Pattern not found", severity="warning")
                 return
-            for offset in reversed(results):
+            for offset, length in reversed(results):
                 try:
-                    self._buffer.replace(offset, len(find), replace)
+                    self._buffer.replace(offset, length, replace)
                 except CoreError as exc:
                     self.notify(f"Replace failed at {offset}: {exc}", severity="error")
                     return
@@ -282,14 +284,15 @@ class BinseekApp(App[None]):
                     self.notify("Pattern not found", severity="warning")
                     return
                 current = results[0]
+            offset, length = current
             try:
-                self._buffer.replace(current, len(find), replace)
+                self._buffer.replace(offset, length, replace)
             except CoreError as exc:
                 self.notify(f"Replace failed: {exc}", severity="error")
                 return
             # Refresh search so the next replace moves on.
             results = self._buffer.search(find)
-            hex_view.set_search_results(results, current)
+            hex_view.set_search_results(results, offset)
             hex_view.refresh_view()
             self.refresh_status()
             self.notify("Replaced one occurrence")

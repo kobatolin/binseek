@@ -110,7 +110,7 @@ int bs_search(
     uint64_t pattern_len,
     uint64_t start_offset,
     uint64_t max_results,
-    uint64_t* results,
+    bs_match_t* results,
     uint64_t* result_count)
 {
     if (!handle || !pattern || !results || !result_count) return -1;

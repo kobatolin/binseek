@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from binseek.core._native import Core, CoreError
 
@@ -15,7 +15,7 @@ class Buffer:
         self._core = core
         self._path = Path(path)
         self._dirty = False
-        self._search_results: List[int] = []
+        self._search_results: List[Tuple[int, int]] = []
         self._search_index = -1
         self._last_pattern: Optional[bytes] = None
 
@@ -46,25 +46,29 @@ class Buffer:
     def read(self, offset: int, length: int) -> bytes:
         return self._core.read_chunk(offset, length)
 
-    def search(self, pattern: bytes, start: int = 0, max_results: int = 1000) -> List[int]:
+    def search(
+        self, pattern: bytes, start: int = 0, max_results: int = 1000
+    ) -> List[Tuple[int, int]]:
         self._last_pattern = pattern
-        self._search_results = self._core.search(pattern, start=start, max_results=max_results)
+        self._search_results = self._core.search(
+            pattern, start=start, max_results=max_results
+        )
         self._search_index = 0 if self._search_results else -1
         return self._search_results
 
-    def search_next(self) -> Optional[int]:
+    def search_next(self) -> Optional[Tuple[int, int]]:
         if not self._search_results:
             return None
         self._search_index = (self._search_index + 1) % len(self._search_results)
         return self._search_results[self._search_index]
 
-    def search_prev(self) -> Optional[int]:
+    def search_prev(self) -> Optional[Tuple[int, int]]:
         if not self._search_results:
             return None
         self._search_index = (self._search_index - 1) % len(self._search_results)
         return self._search_results[self._search_index]
 
-    def current_search_result(self) -> Optional[int]:
+    def current_search_result(self) -> Optional[Tuple[int, int]]:
         if 0 <= self._search_index < len(self._search_results):
             return self._search_results[self._search_index]
         return None

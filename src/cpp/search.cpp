@@ -18,8 +18,8 @@ public:
         }
     }
 
-    std::vector<uint64_t> search(const uint8_t* data, uint64_t size, uint64_t start, uint64_t max_results) const {
-        std::vector<uint64_t> results;
+    std::vector<bs_match_t> search(const uint8_t* data, uint64_t size, uint64_t start, uint64_t max_results) const {
+        std::vector<bs_match_t> results;
         if (len_ == 0 || size < len_ || start >= size) {
             return results;
         }
@@ -31,7 +31,7 @@ public:
                 --j;
             }
             if (j < 0) {
-                results.push_back(i);
+                results.push_back({i, len_});
                 if (results.size() >= max_results) break;
                 // Advance by 1 to allow overlapping matches.
                 ++i;
@@ -55,7 +55,7 @@ private:
 
 } // namespace
 
-std::vector<uint64_t> search_all(
+std::vector<bs_match_t> search_all(
     const uint8_t* data,
     uint64_t size,
     const uint8_t* pattern,

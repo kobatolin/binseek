@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import struct
 from enum import Enum, auto
-from typing import Iterable, Optional, Set
+from typing import Iterable, List, Optional, Set, Tuple
 
 from textual.widgets import Static
 from textual.events import Key
@@ -187,8 +187,12 @@ class HexView(Static):
         self._ensure_visible()
         self.refresh_view()
 
-    def set_search_results(self, results: Iterable[int], current: Optional[int] = None) -> None:
-        self._search_results = set(results)
+    def set_search_results(
+        self, results: Iterable[Tuple[int, int]], current: Optional[int] = None
+    ) -> None:
+        self._search_results = set()
+        for start, length in results:
+            self._search_results.update(range(start, start + length))
         self._search_current = current
         self.refresh_view()
 
@@ -298,13 +302,6 @@ class HexView(Static):
             return "bold yellow"
         return ""
 
-    def _style_for_range(self, start: int, end: int) -> str:
-        for offset in range(start, end):
-            style = self._style_for_offset(offset)
-            if style:
-                return style
-        return ""
-
     def refresh_view(self) -> None:
         if not self._buffer:
             message = Text()
@@ -355,11 +352,27 @@ class HexView(Static):
                 if group_size > 1 and col + group_size <= len(row_data):
                     chunk = row_data[col : col + group_size]
                     value = struct.unpack(self._struct_fmt, bytes(chunk))[0]
-                    hex_str = f"{value:0{group_size * 2}X} "
-                    style = self._style_for_range(row_offset + col, row_offset + col + group_size)
-                    hex_parts.append((hex_str, style))
-                    for b in chunk:
-                        ascii_chars.append((chr(b) if 32 <= b < 127 else ".", style))
+                    hex_digits = f"{value:0{group_size * 2}X}"
+                    base = row_offset + col
+                    byte_styles = [self._style_for_offset(base + i) for i in range(group_size)]
+                    group_style = ""
+                    for i in range(group_size):
+                        if base + i == self._cursor:
+                            group_style = byte_styles[i]
+                            break
+                    if group_style:
+                        hex_parts.append((hex_digits + " ", group_style))
+                        for b in chunk:
+                            ascii_chars.append((chr(b) if 32 <= b < 127 else ".", group_style))
+                    else:
+                        pairs = [hex_digits[i : i + 2] for i in range(0, len(hex_digits), 2)]
+                        for i, pair in enumerate(pairs):
+                            byte_index = i if self._endian == Endian.BIG else group_size - 1 - i
+                            hex_parts.append((pair, byte_styles[byte_index]))
+                        trailing_space_style = byte_styles[-1] if self._endian == Endian.BIG else byte_styles[0]
+                        hex_parts.append((" ", trailing_space_style))
+                        for i, b in enumerate(chunk):
+                            ascii_chars.append((chr(b) if 32 <= b < 127 else ".", byte_styles[i]))
                     col += group_size
                 else:
                     byte = row_data[col]

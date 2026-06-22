@@ -46,11 +46,12 @@ int main() {
     assert(chunk == data);
 
     uint8_t pattern[] = {0x6C, 0x6C}; // "ll"
-    uint64_t results[8] = {0};
+    bs_match_t results[8] = {};
     uint64_t count = 0;
     assert(bs_search(h, pattern, 2, 0, 8, results, &count) == 0);
     assert(count == 1);
-    assert(results[0] == 2);
+    assert(results[0].offset == 2);
+    assert(results[0].length == 2);
 
     // Replace first "Hello" with "Hallo" (same length).
     uint8_t replacement[] = {0x48, 0x61, 0x6C, 0x6C, 0x6F};

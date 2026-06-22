@@ -5,7 +5,11 @@ from __future__ import annotations
 import ctypes
 import platform
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Tuple
+
+
+class _BsMatch(ctypes.Structure):
+    _fields_ = [("offset", ctypes.c_uint64), ("length", ctypes.c_uint64)]
 
 
 def _library_path() -> Path:
@@ -65,7 +69,7 @@ _lib.bs_search.argtypes = [
     ctypes.c_uint64,
     ctypes.c_uint64,
     ctypes.c_uint64,
-    ctypes.POINTER(ctypes.c_uint64),
+    ctypes.POINTER(_BsMatch),
     ctypes.POINTER(ctypes.c_uint64),
 ]
 _lib.bs_search.restype = ctypes.c_int
@@ -141,14 +145,16 @@ class Core:
         self._check(_lib.bs_read_chunk(self._handle, offset, length, buf))
         return bytes(buf)
 
-    def search(self, pattern: bytes, start: int = 0, max_results: int = 1000) -> List[int]:
+    def search(
+        self, pattern: bytes, start: int = 0, max_results: int = 1000
+    ) -> List[Tuple[int, int]]:
         if not pattern:
             return []
         if max_results <= 0:
             return []
         pattern_len = len(pattern)
         pat_buf = (ctypes.c_uint8 * pattern_len).from_buffer_copy(pattern)
-        results = (ctypes.c_uint64 * max_results)()
+        results = (_BsMatch * max_results)()
         count = ctypes.c_uint64(0)
         self._check(
             _lib.bs_search(
@@ -161,7 +167,7 @@ class Core:
                 ctypes.byref(count),
             )
         )
-        return [results[i] for i in range(count.value)]
+        return [(results[i].offset, results[i].length) for i in range(count.value)]
 
     def replace(self, offset: int, old_len: int, new_data: bytes) -> None:
         new_len = len(new_data)

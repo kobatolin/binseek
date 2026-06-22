@@ -86,8 +86,10 @@ def main() -> int:
     search_time = time.perf_counter() - t0
     print(f"  Search completed in {search_time:.3f}s, hits = {len(results)}")
     assert len(results) == 1, f"expected 1 hit, got {len(results)}"
-    assert results[0] == TARGET_OFFSET, f"expected offset {TARGET_OFFSET:#x}, got {results[0]:#x}"
-    print(f"  Offset = 0x{results[0]:08X} (correct)")
+    offset, length = results[0]
+    assert offset == TARGET_OFFSET, f"expected offset {TARGET_OFFSET:#x}, got {offset:#x}"
+    assert length == len(TARGET_PATTERN)
+    print(f"  Offset = 0x{offset:08X} (correct)")
     print()
 
     # 4. Replace a single 4-byte value in-place

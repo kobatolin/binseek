@@ -55,6 +55,31 @@ def test_hjkl_navigates_when_file_open() -> None:
         os.unlink(path)
 
 
+def test_find_highlights_full_match_range() -> None:
+    with tempfile.NamedTemporaryFile(delete=False) as f:
+        f.write(b"xxABCxxABCxx")
+        path = f.name
+
+    app = BinseekApp(path)
+
+    async def _run() -> None:
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            hex_view = app.query_one("#hex")
+            results = app._buffer.search(b"ABC")
+            assert results == [(2, 3), (7, 3)]
+            hex_view.set_search_results(results, results[0][0])
+            assert hex_view._search_current == 2
+            assert hex_view._search_results == {2, 3, 4, 7, 8, 9}
+
+    try:
+        asyncio.run(_run())
+    finally:
+        if app._buffer:
+            app._buffer.close()
+        os.unlink(path)
+
+
 def test_confirm_dialog_keyboard_navigation() -> None:
     """Confirm dialog buttons can be switched with arrow keys and Tab."""
 

@@ -35,9 +35,18 @@ def test_open_and_read(sample_path: str) -> None:
 def test_search(sample_path: str) -> None:
     buf = Buffer.open(sample_path)
     results = buf.search(b"Hello")
-    assert results == [0]
+    assert results == [(0, 5)]
     results = buf.search(b" ")
-    assert results == [5, 12, 17, 20, 22, 27, 32, 36]
+    assert results == [
+        (5, 1),
+        (12, 1),
+        (17, 1),
+        (20, 1),
+        (22, 1),
+        (27, 1),
+        (32, 1),
+        (36, 1),
+    ]
     buf.close()
 
 
