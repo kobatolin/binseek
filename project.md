@@ -35,9 +35,10 @@ binseek/
 
 ## 核心功能
 - 只读 mmap 打开文件（Windows `CreateFileMapping`，Linux `mmap`）
-- Boyer-Moore-Horspool 字节搜索
+- Boyer-Moore-Horspool 字节搜索，C API 返回 `(offset, length)` 区间
 - 修改区间模型：覆盖/插入/删除，自动合并，保存时顺序写出
 - 菜单/快捷键：Open/Save/Save As/Find/Replace/Goto/Quit
+- 鼠标滚轮按 3 行滚动，点击 hex/ASCII 区域移动光标；2B/4B 模式按组选中
 
 ## 开发工作流
 1. 创建并激活虚拟环境：
@@ -69,7 +70,7 @@ binseek/
    pip install build
    python -m build --wheel --outdir dist
    ```
-3. 产物 `dist/binseek-0.1.1-py3-none-any.whl` 同时包含 `libcore.dll` 与 `libcore.so`，分发后用户可直接 `pip install` 使用。
+3. 产物 `dist/binseek-0.1.3-py3-none-any.whl` 同时包含 `libcore.dll` 与 `libcore.so`，分发后用户可直接 `pip install` 使用。
 
 ## 里程碑
 1. M0：仓库初始化 + Makefile + .gitignore
@@ -79,3 +80,5 @@ binseek/
 5. M4：查找/替换/跳转对话框
 6. M5：测试 + README + git commit
 7. M6：支持 ASCII 直接编辑（Hex/ASCII 工作区、Tab 切换、1B 限制）
+8. M7：搜索高亮显示完整匹配区间
+9. M8：鼠标滚轮翻页与点击选中

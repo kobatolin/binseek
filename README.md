@@ -18,10 +18,11 @@ A fast, keyboard-driven **TUI binary file viewer, searcher and editor**.
   - **REPLACE** (`E`): type two hex digits to overwrite the byte under the cursor
   - **INSERT** (`Insert`): type two hex digits to insert a new byte at the cursor
   - Press `Esc` to return to VIEW mode
-- Find bytes (hex or text) with result highlighting
+- Find bytes (hex or text) with **full-match highlighting**
 - Replace single or all occurrences
 - Go to absolute offset
 - Save in-place or save-as
+- **Mouse support**: wheel scrolls by 3 rows, click hex/ASCII area to move cursor
 
 ## Shortcuts
 
@@ -35,14 +36,18 @@ A fast, keyboard-driven **TUI binary file viewer, searcher and editor**.
 | `F6` | Replace |
 | `F7` | Go to offset |
 | `F8` | Quit |
-| `F9` / `Shift+F9` | Next / previous result |
+| `F9` / `Shift+F9` | Next / previous find result |
 | `Ctrl+O` / `Ctrl+S` / `Ctrl+Shift+S` | Open / Save / Save As |
 | `Ctrl+F` / `Ctrl+H` / `Ctrl+G` / `Ctrl+Q` | Find / Replace / Goto / Quit |
 | `E` | Toggle REPLACE mode |
 | `Insert` | Toggle INSERT mode |
 | `Esc` | Return to VIEW mode |
-| Arrows / HJKL | Navigate hex view |
+| Arrows / HJKL | Navigate by byte/group |
 | PageUp / PageDown | Scroll by page |
+| `1` / `2` / `4` | Switch 1B / 2B / 4B display mode |
+| `B` | Toggle little/big endian |
+| Mouse wheel | Scroll by 3 rows |
+| Mouse click | Move cursor to byte/group |
 
 ## Build
 
@@ -166,7 +171,7 @@ The output `dist/binseek-<version>-py3-none-any.whl` can be installed on either
 Windows or Linux; the correct shared library is loaded at runtime:
 
 ```bash
-pip install dist/binseek-0.1.1-py3-none-any.whl
+pip install dist/binseek-0.1.3-py3-none-any.whl
 binseek <file>
 ```
 
