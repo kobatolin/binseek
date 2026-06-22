@@ -121,6 +121,150 @@ def test_confirm_dialog_keyboard_navigation() -> None:
     asyncio.run(_run())
 
 
+def test_mouse_wheel_scrolls_by_three_rows() -> None:
+    with tempfile.NamedTemporaryFile(delete=False) as f:
+        f.write(b"A" * 256)
+        path = f.name
+
+    app = BinseekApp(path)
+
+    async def _run() -> None:
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            hex_view = app.query_one("#hex")
+            assert hex_view.cursor == 0
+
+            from textual.events import MouseScrollDown, MouseScrollUp
+
+            hex_view.on_mouse_scroll_down(
+                MouseScrollDown(hex_view, 0, 0, 0, 0, 0, False, False, False)
+            )
+            await pilot.pause()
+            assert hex_view.cursor == hex_view.BYTES_PER_ROW * 3
+
+            hex_view.on_mouse_scroll_up(
+                MouseScrollUp(hex_view, 0, 0, 0, 0, 0, False, False, False)
+            )
+            await pilot.pause()
+            assert hex_view.cursor == 0
+
+    try:
+        asyncio.run(_run())
+    finally:
+        if app._buffer:
+            app._buffer.close()
+        os.unlink(path)
+
+
+def test_mouse_click_selects_byte_in_hex_area() -> None:
+    with tempfile.NamedTemporaryFile(delete=False) as f:
+        f.write(b"ABCDEFGH")
+        path = f.name
+
+    app = BinseekApp(path)
+
+    async def _run() -> None:
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            hex_view = app.query_one("#hex")
+
+            from textual.events import MouseUp
+
+            # Row 0 address width = 10, first hex byte "41" at x=10..11, space at x=12
+            hex_view.on_mouse_up(MouseUp(hex_view, 10, 0, 0, 0, 1, False, False, False))
+            await pilot.pause()
+            assert hex_view.cursor == 0
+
+            hex_view.on_mouse_up(MouseUp(hex_view, 13, 0, 0, 0, 1, False, False, False))
+            await pilot.pause()
+            assert hex_view.cursor == 1
+
+            hex_view.on_mouse_up(MouseUp(hex_view, 22, 0, 0, 0, 1, False, False, False))
+            await pilot.pause()
+            assert hex_view.cursor == 4
+
+    try:
+        asyncio.run(_run())
+    finally:
+        if app._buffer:
+            app._buffer.close()
+        os.unlink(path)
+
+
+def test_mouse_click_selects_byte_in_ascii_area() -> None:
+    with tempfile.NamedTemporaryFile(delete=False) as f:
+        f.write(b"ABCDEFGH")
+        path = f.name
+
+    app = BinseekApp(path)
+
+    async def _run() -> None:
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            hex_view = app.query_one("#hex")
+            hex_width = (1 * 2 + 1) * hex_view.BYTES_PER_ROW
+            ascii_start = 10 + hex_width + 2
+
+            from textual.events import MouseUp
+
+            hex_view.on_mouse_up(
+                MouseUp(hex_view, ascii_start, 0, 0, 0, 1, False, False, False)
+            )
+            await pilot.pause()
+            assert hex_view.cursor == 0
+
+            hex_view.on_mouse_up(
+                MouseUp(hex_view, ascii_start + 2, 0, 0, 0, 1, False, False, False)
+            )
+            await pilot.pause()
+            assert hex_view.cursor == 2
+
+    try:
+        asyncio.run(_run())
+    finally:
+        if app._buffer:
+            app._buffer.close()
+        os.unlink(path)
+
+
+def test_mouse_click_selects_group_in_word_mode() -> None:
+    with tempfile.NamedTemporaryFile(delete=False) as f:
+        f.write(b"\x00" * 16)
+        path = f.name
+
+    app = BinseekApp(path)
+
+    async def _run() -> None:
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            hex_view = app.query_one("#hex")
+            await pilot.press("2")
+            await pilot.pause()
+            assert hex_view.display_mode == "2B"
+
+            from textual.events import MouseUp
+
+            # WORD mode: group width = 2*2+1 = 5 chars, first group x=10..14
+            hex_view.on_mouse_up(MouseUp(hex_view, 10, 0, 0, 0, 1, False, False, False))
+            await pilot.pause()
+            assert hex_view.cursor == 0
+
+            hex_view.on_mouse_up(MouseUp(hex_view, 14, 0, 0, 0, 1, False, False, False))
+            await pilot.pause()
+            assert hex_view.cursor == 0
+
+            hex_view.on_mouse_up(MouseUp(hex_view, 15, 0, 0, 0, 1, False, False, False))
+            await pilot.pause()
+            assert hex_view.cursor == 2
+
+    try:
+        asyncio.run(_run())
+    finally:
+        if app._buffer:
+            app._buffer.close()
+        os.unlink(path)
+
+
 def test_delete_byte_in_insert_mode() -> None:
     with tempfile.NamedTemporaryFile(delete=False) as f:
         f.write(b"ABCDEFGH")

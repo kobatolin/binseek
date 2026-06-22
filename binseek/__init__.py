@@ -1,3 +1,3 @@
 """binseek: a TUI binary file viewer, searcher and editor."""
 
-__version__ = "0.1.2"
+__version__ = "0.1.3"

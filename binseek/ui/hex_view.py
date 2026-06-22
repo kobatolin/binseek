@@ -7,7 +7,7 @@ from enum import Enum, auto
 from typing import Iterable, List, Optional, Set, Tuple
 
 from textual.widgets import Static
-from textual.events import Key
+from textual.events import Key, MouseScrollDown, MouseScrollUp, MouseUp
 from rich.text import Text
 
 from binseek.model.buffer import Buffer
@@ -416,6 +416,76 @@ class HexView(Static):
 
         self.update(text)
         self.app.refresh_status()
+
+    def on_mouse_scroll_up(self, event: MouseScrollUp) -> None:
+        if not self._buffer:
+            return
+        self.move_cursor(-self.BYTES_PER_ROW * 3)
+        event.stop()
+
+    def on_mouse_scroll_down(self, event: MouseScrollDown) -> None:
+        if not self._buffer:
+            return
+        self.move_cursor(self.BYTES_PER_ROW * 3)
+        event.stop()
+
+    def _offset_from_mouse(self, x: int, y: int) -> Optional[int]:
+        if not self._buffer:
+            return None
+        size = self._buffer.size
+        if size == 0:
+            return None
+        row_offset = self._offset + y * self.BYTES_PER_ROW
+        if row_offset >= size:
+            return None
+        group_size = self._group_size
+        hex_width = (group_size * 2 + 1) * (self.BYTES_PER_ROW // group_size)
+        addr_width = 10
+        ascii_start = addr_width + hex_width + 2
+
+        if x < addr_width:
+            return row_offset
+
+        if x < addr_width + hex_width:
+            if group_size == 1:
+                col = (x - addr_width) // 3
+            else:
+                slot = x - addr_width
+                slot_width = group_size * 2 + 1
+                group_index = slot // slot_width
+                within = slot % slot_width
+                if within >= group_size * 2:
+                    within = group_size * 2 - 1
+                col = group_index * group_size + (within // 2)
+            col = max(0, min(col, self.BYTES_PER_ROW - 1))
+            offset = row_offset + col
+            if offset >= size:
+                return None
+            if group_size > 1:
+                offset = (offset // group_size) * group_size
+            return offset
+
+        if x < ascii_start:
+            return row_offset
+
+        col = x - ascii_start
+        col = max(0, min(col, self.BYTES_PER_ROW - 1))
+        offset = row_offset + col
+        if offset >= size:
+            return None
+        return offset
+
+    def on_mouse_up(self, event: MouseUp) -> None:
+        if not self._buffer:
+            return
+        offset = self._offset_from_mouse(event.x, event.y)
+        if offset is None:
+            return
+        self._cursor = offset
+        self._align_cursor()
+        self._ensure_visible()
+        self.refresh_view()
+        event.stop()
 
     def move_cursor(self, delta: int) -> None:
         if not self._buffer:
