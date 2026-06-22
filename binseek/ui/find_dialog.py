@@ -17,6 +17,7 @@ from binseek.ui.utils import parse_pattern
 class FindRequest:
     pattern: bytes
     case_insensitive: bool = False
+    escape: bool = False
 
 
 class FindDialog(ModalScreen[Optional[FindRequest]]):
@@ -61,6 +62,7 @@ class FindDialog(ModalScreen[Optional[FindRequest]]):
             yield Input(value=self.initial, id="pattern")
             yield Checkbox("Hex pattern", value=True, id="hex")
             yield Checkbox("Case insensitive", value=False, id="case")
+            yield Checkbox("Escape sequences", value=False, id="escape")
             yield Label("", id="error")
             with Horizontal():
                 yield Button("Find", variant="primary", id="find")
@@ -70,9 +72,10 @@ class FindDialog(ModalScreen[Optional[FindRequest]]):
         pattern = self.query_one("#pattern", Input).value
         hex_mode = self.query_one("#hex", Checkbox).value
         case_insensitive = self.query_one("#case", Checkbox).value
+        escape = self.query_one("#escape", Checkbox).value
         error_label = self.query_one("#error", Label)
         try:
-            data = parse_pattern(pattern, hex_mode)
+            data = parse_pattern(pattern, hex_mode, escape=escape)
         except ValueError as exc:
             error_label.update(f"Error: {exc}")
             return None
@@ -82,14 +85,18 @@ class FindDialog(ModalScreen[Optional[FindRequest]]):
         error_label.update("")
         if hex_mode:
             case_insensitive = False
-        return FindRequest(data, case_insensitive)
+            escape = False
+        return FindRequest(data, case_insensitive, escape)
 
     def on_checkbox_changed(self, event: Checkbox.Changed) -> None:
         if event.checkbox.id == "hex":
             case_checkbox = self.query_one("#case", Checkbox)
+            escape_checkbox = self.query_one("#escape", Checkbox)
             case_checkbox.disabled = event.checkbox.value
+            escape_checkbox.disabled = event.checkbox.value
             if event.checkbox.value:
                 case_checkbox.value = False
+                escape_checkbox.value = False
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "find":

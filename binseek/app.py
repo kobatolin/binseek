@@ -218,7 +218,8 @@ class BinseekApp(App[None]):
         if not self._buffer or request is None:
             return
         results = self._buffer.search(
-            request.pattern, case_insensitive=request.case_insensitive
+            request.pattern,
+            case_insensitive=request.case_insensitive,
         )
         hex_view = self.query_one(HexView)
         if not results:
