@@ -60,6 +60,25 @@ class Buffer:
         self._search_index = 0 if self._search_results else -1
         return self._search_results
 
+    def search_regex(
+        self,
+        pattern: str,
+        start: int = 0,
+        max_results: int = 1000,
+        hex_mode: bool = False,
+        case_insensitive: bool = False,
+    ) -> List[Tuple[int, int]]:
+        self._last_pattern = pattern.encode("utf-8")
+        self._search_results = self._core.search_regex(
+            pattern,
+            start=start,
+            max_results=max_results,
+            hex_mode=hex_mode,
+            case_insensitive=case_insensitive,
+        )
+        self._search_index = 0 if self._search_results else -1
+        return self._search_results
+
     def search_next(self) -> Optional[Tuple[int, int]]:
         if not self._search_results:
             return None

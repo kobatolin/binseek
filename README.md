@@ -19,6 +19,7 @@ A fast, keyboard-driven **TUI binary file viewer, searcher and editor**.
   - **INSERT** (`Insert`): type two hex digits to insert a new byte at the cursor
   - Press `Esc` to return to VIEW mode
 - Find bytes (hex or text) with **full-match highlighting**
+- **Regex search** in ASCII and HEX modes
 - Replace single or all occurrences
 - Go to absolute offset
 - Save in-place or save-as
@@ -48,6 +49,23 @@ A fast, keyboard-driven **TUI binary file viewer, searcher and editor**.
 | `B` | Toggle little/big endian |
 | Mouse wheel | Scroll by 3 rows |
 | Mouse click | Move cursor to byte/group |
+
+## Regex Search
+
+Open the Find dialog (`F3` / `Ctrl+F`) and enable **Regex**:
+
+- **ASCII regex**: supports `.` `*` `+` `?` `|` `()` `[]`, plus `\d` `\w` `\s` and escapes such as `\t` `\n` `\r` `\0` `\xNN`.
+- **HEX regex**: each token represents one byte. Spaces are ignored.
+  - `12` - exact byte 0x12
+  - `1.` / `.2` / `..` - wildcard nibble(s)
+  - `?` - any byte
+  - `[0-7]` / `[048C]` - nibble character class or range
+
+Example HEX regex for 4-byte aligned addresses in `0x08000000 ~ 0x083FFFFC`:
+
+```
+.[048C] ? [0-3]. 08
+```
 
 ## Build
 

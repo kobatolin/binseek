@@ -37,6 +37,18 @@ BS_API int bs_search(
     bs_match_t* results,
     uint64_t* result_count);
 
+#define BS_SEARCH_REGEX_HEX  0x01
+#define BS_SEARCH_REGEX_ICASE 0x02
+
+BS_API int bs_search_regex(
+    bs_handle_t handle,
+    const char* pattern,
+    uint64_t start_offset,
+    uint64_t max_results,
+    int flags,
+    bs_match_t* results,
+    uint64_t* result_count);
+
 BS_API int bs_replace(
     bs_handle_t handle,
     uint64_t offset,

@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import ctypes
+import os
 import platform
+import sys
 from pathlib import Path
 from typing import List, Optional, Tuple
 
@@ -35,10 +37,18 @@ def _load_library() -> ctypes.CDLL:
             f"Native core library not found: {lib_path}\n"
             "Run 'make linux' or 'make windows' first."
         )
+    here = lib_path.parent
+    dll_dir = None
+    if sys.platform == "win32" and hasattr(os, "add_dll_directory"):
+        # Ensure dependent DLLs (libboost_regex.dll) in the same package dir are found.
+        dll_dir = os.add_dll_directory(str(here))
     try:
         return ctypes.CDLL(str(lib_path))
     except OSError as exc:
         raise RuntimeError(f"Failed to load native core library: {exc}") from exc
+    finally:
+        if dll_dir is not None:
+            dll_dir.close()
 
 
 _lib = _load_library()
@@ -74,6 +84,17 @@ _lib.bs_search.argtypes = [
     ctypes.POINTER(ctypes.c_uint64),
 ]
 _lib.bs_search.restype = ctypes.c_int
+
+_lib.bs_search_regex.argtypes = [
+    ctypes.c_void_p,
+    ctypes.c_char_p,
+    ctypes.c_uint64,
+    ctypes.c_uint64,
+    ctypes.c_int,
+    ctypes.POINTER(_BsMatch),
+    ctypes.POINTER(ctypes.c_uint64),
+]
+_lib.bs_search_regex.restype = ctypes.c_int
 
 _lib.bs_replace.argtypes = [
     ctypes.c_void_p,
@@ -169,6 +190,38 @@ class Core:
                 start,
                 max_results,
                 1 if case_insensitive else 0,
+                results,
+                ctypes.byref(count),
+            )
+        )
+        return [(results[i].offset, results[i].length) for i in range(count.value)]
+
+    def search_regex(
+        self,
+        pattern: str,
+        start: int = 0,
+        max_results: int = 1000,
+        hex_mode: bool = False,
+        case_insensitive: bool = False,
+    ) -> List[Tuple[int, int]]:
+        if not pattern:
+            return []
+        if max_results <= 0:
+            return []
+        results = (_BsMatch * max_results)()
+        count = ctypes.c_uint64(0)
+        flags = 0
+        if hex_mode:
+            flags |= 0x01
+        if case_insensitive:
+            flags |= 0x02
+        self._check(
+            _lib.bs_search_regex(
+                self._handle,
+                pattern.encode("utf-8"),
+                start,
+                max_results,
+                flags,
                 results,
                 ctypes.byref(count),
             )

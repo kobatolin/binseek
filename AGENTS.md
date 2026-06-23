@@ -11,14 +11,18 @@
   - `tests/`：pytest + `tests/cpp/` 小型 C++ 自测。
 
 ## 必须知道的构建事实
-- 不要直接改 `binseek/libcore.so` 或 `binseek/libcore.dll`，应改 `src/cpp/` 后重新 `make`。
+- 不要直接改 `binseek/libcore.so`、`binseek/libcore.dll` 或 `binseek/libboost_regex.dll`，应改 `src/cpp/` 后重新 `make`。
+- C++ 核心现在依赖 `boost::regex`（正则搜索）：
+  - WSL 构建 Linux 库需要系统安装 `libboost-regex-dev`。
+  - Windows DLL 交叉编译使用项目本地 `third_party/boost-mingw/`（已在 `.gitignore`，不提交）。
 - 默认在 WSL 中构建；Windows DLL 用 mingw-w64 交叉编译。
   ```bash
   make linux      # -> binseek/libcore.so
-  make windows    # -> binseek/libcore.dll
+  make windows    # -> binseek/libcore.dll + binseek/libboost_regex.dll
   make test-cpp   # 编译并运行 C++ 自测
   ```
 - Windows 宿主侧若没 make/mingw，使用 `wsl make linux` / `wsl make windows`。
+- 运行时 `binseek/core/_native.py` 会临时把 `binseek/` 加入 Windows DLL 搜索路径，以便加载 `libboost_regex.dll`。
 
 ## Python 3.8 关键陷阱
 - `from __future__ import annotations` 只延迟**函数/变量注解**，**不延迟基类泛型参数**。
@@ -44,7 +48,7 @@
   ```
 
 ## 打包分发
-- wheel 同时包含 `libcore.dll` 与 `libcore.so`：
+- wheel 同时包含 `libcore.dll`、`libcore.so` 和 `libboost_regex.dll`：
   ```bash
   make linux
   make windows

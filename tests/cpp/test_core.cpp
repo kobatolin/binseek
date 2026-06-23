@@ -62,6 +62,51 @@ int main() {
     assert(ci_results[0].offset == 6);
     assert(ci_results[0].length == 5);
 
+    // ASCII regex search.
+    bs_match_t re_results[8] = {};
+    uint64_t re_count = 0;
+    assert(bs_search_regex(h, "H.llo", 0, 8, 0, re_results, &re_count) == 0);
+    assert(re_count == 1);
+    assert(re_results[0].offset == 0);
+    assert(re_results[0].length == 5);
+
+    // Case-insensitive ASCII regex.
+    re_count = 0;
+    assert(bs_search_regex(h, "wOrLd", 0, 8, BS_SEARCH_REGEX_ICASE, re_results, &re_count) == 0);
+    assert(re_count == 1);
+    assert(re_results[0].offset == 6);
+    assert(re_results[0].length == 5);
+
+    // HEX regex: exact byte.
+    bs_match_t hex_results[8] = {};
+    uint64_t hex_count = 0;
+    assert(bs_search_regex(h, "6C", 0, 8, BS_SEARCH_REGEX_HEX, hex_results, &hex_count) == 0);
+    assert(hex_count == 3);
+    assert(hex_results[0].offset == 2);
+    assert(hex_results[0].length == 1);
+
+    // HEX regex: nibble wildcard.
+    hex_count = 0;
+    assert(bs_search_regex(h, "6.", 0, 8, BS_SEARCH_REGEX_HEX, hex_results, &hex_count) == 0);
+    assert(hex_count == 7);
+
+    // HEX regex: '?' whole-byte wildcard.
+    hex_count = 0;
+    assert(bs_search_regex(h, "48 ? 6C 6C", 0, 8, BS_SEARCH_REGEX_HEX, hex_results, &hex_count) == 0);
+    assert(hex_count == 1);
+    assert(hex_results[0].offset == 0);
+    assert(hex_results[0].length == 4);
+
+    // HEX regex: character class for address range.
+    // Data: 0x00 0x0A at the end; pattern "0[0-A]?" won't match, use a simple class test.
+    hex_count = 0;
+    assert(bs_search_regex(h, "[0-7][0-F]", 0, 8, BS_SEARCH_REGEX_HEX, hex_results, &hex_count) == 0);
+    assert(hex_count >= 1);
+
+    // Invalid HEX regex returns error.
+    int rc = bs_search_regex(h, "[", 0, 8, BS_SEARCH_REGEX_HEX, hex_results, &hex_count);
+    assert(rc == -1);
+
     // Replace first "Hello" with "Hallo" (same length).
     uint8_t replacement[] = {0x48, 0x61, 0x6C, 0x6C, 0x6F};
     assert(bs_replace(h, 0, 5, replacement, 5) == 0);

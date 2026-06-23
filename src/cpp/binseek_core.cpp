@@ -2,6 +2,7 @@
 #include "mmap_file.h"
 #include "editor.h"
 #include "search.h"
+#include "regex_search.h"
 
 #include <algorithm>
 #include <cstdint>
@@ -133,6 +134,49 @@ int bs_search(
         start_offset,
         max_results,
         case_insensitive != 0);
+
+    *result_count = hits.size();
+    for (size_t i = 0; i < hits.size(); ++i) {
+        results[i] = hits[i];
+    }
+    return 0;
+}
+
+int bs_search_regex(
+    bs_handle_t handle,
+    const char* pattern,
+    uint64_t start_offset,
+    uint64_t max_results,
+    int flags,
+    bs_match_t* results,
+    uint64_t* result_count)
+{
+    if (!handle || !pattern || !results || !result_count) return -1;
+    auto* core = as_core(handle);
+    if (!core->file.is_open()) {
+        core->error = "file not open";
+        return -1;
+    }
+    if (max_results == 0) {
+        *result_count = 0;
+        return 0;
+    }
+
+    std::string error;
+    auto hits = search_regex_all(
+        core->file.data(),
+        core->file.size(),
+        pattern,
+        start_offset,
+        max_results,
+        (flags & BS_SEARCH_REGEX_HEX) != 0,
+        (flags & BS_SEARCH_REGEX_ICASE) != 0,
+        &error);
+
+    if (!error.empty()) {
+        core->error = error;
+        return -1;
+    }
 
     *result_count = hits.size();
     for (size_t i = 0; i < hits.size(); ++i) {

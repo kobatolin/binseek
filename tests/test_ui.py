@@ -865,3 +865,50 @@ def test_tab_does_not_switch_workspace_in_view_mode() -> None:
         if app._buffer:
             app._buffer.close()
         os.unlink(path)
+
+
+def test_find_dialog_regex_mode() -> None:
+    from textual.widgets import Checkbox, Input
+
+    from binseek.ui.find_dialog import FindDialog
+
+    async def _run() -> None:
+        app = App()
+        async with app.run_test() as pilot:
+            dialog = FindDialog()
+            app.push_screen(dialog)
+            await pilot.pause()
+
+            pattern_input = app.screen.query_one("#pattern", Input)
+            hex_checkbox = app.screen.query_one("#hex", Checkbox)
+            case_checkbox = app.screen.query_one("#case", Checkbox)
+            escape_checkbox = app.screen.query_one("#escape", Checkbox)
+            regex_checkbox = app.screen.query_one("#regex", Checkbox)
+
+            pattern_input.value = ".[048C] ? [0-3]. 08"
+            regex_checkbox.value = True
+            hex_checkbox.value = True
+            await pilot.pause()
+
+            request = dialog._parse()
+            assert request is not None
+            assert request.regex is True
+            assert request.hex_mode is True
+            assert request.pattern == ".[048C] ? [0-3]. 08"
+            assert case_checkbox.disabled is True
+            assert escape_checkbox.disabled is True
+
+            # ASCII regex: case insensitive available
+            regex_checkbox.value = True
+            hex_checkbox.value = False
+            case_checkbox.value = True
+            await pilot.pause()
+
+            pattern_input.value = r"H.llo"
+            request = dialog._parse()
+            assert request is not None
+            assert request.regex is True
+            assert request.hex_mode is False
+            assert request.case_insensitive is True
+
+    asyncio.run(_run())

@@ -217,10 +217,19 @@ class BinseekApp(App[None]):
     def _do_find(self, request: Optional[FindRequest]) -> None:
         if not self._buffer or request is None:
             return
-        results = self._buffer.search(
-            request.pattern,
-            case_insensitive=request.case_insensitive,
-        )
+        if request.regex:
+            assert isinstance(request.pattern, str)
+            results = self._buffer.search_regex(
+                request.pattern,
+                hex_mode=request.hex_mode,
+                case_insensitive=request.case_insensitive,
+            )
+        else:
+            assert isinstance(request.pattern, bytes)
+            results = self._buffer.search(
+                request.pattern,
+                case_insensitive=request.case_insensitive,
+            )
         hex_view = self.query_one(HexView)
         if not results:
             hex_view.clear_search_results()

@@ -20,4 +20,4 @@ where = ["."]
 include = ["binseek*"]
 
 [tool.setuptools.package-data]
-binseek = ["libcore.dll", "libcore.so"]
+binseek = ["libcore.dll", "libcore.so", "libboost_regex.dll"]

@@ -20,6 +20,10 @@ build/
 # Compiled core library (kept in repo optionally, but ignored by default)
 binseek/libcore.so
 binseek/libcore.dll
+binseek/libboost_regex.dll
+
+# Third-party vendored dependencies (kept locally, not committed)
+third_party/
 
 # IDE
 .vscode/

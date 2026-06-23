@@ -83,3 +83,32 @@ def test_replace_insert_and_delete(sample_path: str) -> None:
 def test_open_missing_file() -> None:
     with pytest.raises(CoreError):
         Buffer.open("/nonexistent/path/for/binseek/test.bin")
+
+
+def test_search_regex_ascii(sample_path: str) -> None:
+    buf = Buffer.open(sample_path)
+    results = buf.search_regex(r"H.llo", hex_mode=False)
+    assert results == [(0, 5)]
+    results = buf.search_regex(r"wor\w+", hex_mode=False)
+    assert results == [(6, 5)]
+    results = buf.search_regex(r"HELLO", hex_mode=False, case_insensitive=True)
+    assert results == [(0, 5)]
+    buf.close()
+
+
+def test_search_regex_hex(sample_path: str) -> None:
+    buf = Buffer.open(sample_path)
+    results = buf.search_regex("48 65 6C 6C 6F", hex_mode=True)
+    assert results == [(0, 5)]
+    results = buf.search_regex("48 ? 6C 6C", hex_mode=True)
+    assert results == [(0, 4)]
+    results = buf.search_regex("6.", hex_mode=True)
+    assert len(results) >= 2
+    buf.close()
+
+
+def test_search_regex_hex_invalid(sample_path: str) -> None:
+    buf = Buffer.open(sample_path)
+    with pytest.raises(CoreError):
+        buf.search_regex("[", hex_mode=True)
+    buf.close()
