@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Optional
+
 from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical
 from textual.events import Key
@@ -9,7 +11,7 @@ from textual.screen import ModalScreen
 from textual.widgets import Button, Label
 
 
-class ConfirmDialog(ModalScreen[str | None]):
+class ConfirmDialog(ModalScreen[Optional[str]]):
     """A modal dialog that returns the user's choice."""
 
     DEFAULT_CSS = """

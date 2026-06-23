@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
+from typing import Optional
+
 from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical
 from textual.screen import ModalScreen
 from textual.widgets import Button, Input, Label
 
 
-class InputDialog(ModalScreen[str | None]):
+class InputDialog(ModalScreen[Optional[str]]):
     """A simple modal dialog asking the user for a single line of text."""
 
     DEFAULT_CSS = """

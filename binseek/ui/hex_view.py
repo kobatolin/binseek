@@ -57,7 +57,7 @@ class HexView(Static):
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__("", *args, **kwargs)
-        self._buffer: Buffer | None = None
+        self._buffer: Optional[Buffer] = None
         self._offset = 0
         self._cursor = 0
         self._search_results: Set[int] = set()
@@ -71,7 +71,7 @@ class HexView(Static):
         self._endian = Endian.LITTLE
 
     @property
-    def buffer(self) -> Buffer | None:
+    def buffer(self) -> Optional[Buffer]:
         return self._buffer
 
     @property
@@ -100,7 +100,7 @@ class HexView(Static):
             return ""
         return f"{self._pending_value:0{self._pending_nibbles}X}"
 
-    def set_buffer(self, buffer: Buffer | None) -> None:
+    def set_buffer(self, buffer: Optional[Buffer]) -> None:
         self._buffer = buffer
         self._offset = 0
         self._cursor = 0

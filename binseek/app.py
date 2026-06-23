@@ -131,7 +131,7 @@ class BinseekApp(App[None]):
             proceed_to_open()
             return
 
-        def on_choice(choice: str | None) -> None:
+        def on_choice(choice: Optional[str]) -> None:
             if choice == "save":
                 try:
                     self._buffer.save()
@@ -183,13 +183,13 @@ class BinseekApp(App[None]):
             self.refresh_status()
             self.notify(f"Saved {target}")
 
-        def on_path(path: str | None) -> None:
+        def on_path(path: Optional[str]) -> None:
             if not path:
                 return
             target = Path(path)
             if target.exists() and target.resolve() != self._buffer.path.resolve():
 
-                def on_choice(choice: str | None) -> None:
+                def on_choice(choice: Optional[str]) -> None:
                     if choice == "save":
                         do_save(target)
 
@@ -311,7 +311,7 @@ class BinseekApp(App[None]):
             self.notify("No file open", severity="warning")
             return
 
-        def on_offset(offset: int | None) -> None:
+        def on_offset(offset: Optional[int]) -> None:
             if offset is None:
                 return
             if offset >= self._buffer.size:
@@ -335,7 +335,7 @@ class BinseekApp(App[None]):
             self._do_exit()
             return
 
-        def on_choice(choice: str | None) -> None:
+        def on_choice(choice: Optional[str]) -> None:
             if choice == "save":
                 try:
                     self._buffer.save()

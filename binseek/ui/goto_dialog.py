@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
+from typing import Optional
+
 from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical
 from textual.screen import ModalScreen
 from textual.widgets import Button, Input, Label
 
 
-class GotoDialog(ModalScreen[int | None]):
+class GotoDialog(ModalScreen[Optional[int]]):
     """Dialog for jumping to an absolute offset."""
 
     DEFAULT_CSS = """
@@ -50,7 +52,7 @@ class GotoDialog(ModalScreen[int | None]):
                 yield Button("OK", variant="primary", id="ok")
                 yield Button("Cancel", id="cancel")
 
-    def _parse(self) -> int | None:
+    def _parse(self) -> Optional[int]:
         text = self.query_one("#offset", Input).value.strip()
         error_label = self.query_one("#error", Label)
         try:

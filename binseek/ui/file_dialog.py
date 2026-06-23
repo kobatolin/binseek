@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Optional, Union
 
 from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical
@@ -10,7 +11,7 @@ from textual.screen import ModalScreen
 from textual.widgets import Button, Input, Label, ListItem, ListView
 
 
-class FileDialog(ModalScreen[str | None]):
+class FileDialog(ModalScreen[Optional[str]]):
     """A modal file dialog that lets the user browse directories and pick a file.
 
     Returns the selected absolute path as a string, or ``None`` when cancelled.
@@ -54,7 +55,7 @@ class FileDialog(ModalScreen[str | None]):
     def __init__(
         self,
         title: str,
-        initial: str | Path | None = None,
+        initial: Optional[Union[str, Path]] = None,
         default_name: str = "",
         save_mode: bool = False,
     ) -> None:
