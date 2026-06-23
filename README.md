@@ -171,7 +171,7 @@ The output `dist/binseek-<version>-py3-none-any.whl` can be installed on either
 Windows or Linux; the correct shared library is loaded at runtime:
 
 ```bash
-pip install dist/binseek-0.1.3-py3-none-any.whl
+pip install dist/binseek-<version>-py3-none-any.whl
 binseek <file>
 ```
 

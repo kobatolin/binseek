@@ -70,7 +70,7 @@ binseek/
    pip install build
    python -m build --wheel --outdir dist
    ```
-3. 产物 `dist/binseek-0.1.3-py3-none-any.whl` 同时包含 `libcore.dll` 与 `libcore.so`，分发后用户可直接 `pip install` 使用。
+3. 产物 `dist/binseek-<version>-py3-none-any.whl` 同时包含 `libcore.dll` 与 `libcore.so`，分发后用户可直接 `pip install` 使用。
 
 ## 里程碑
 1. M0：仓库初始化 + Makefile + .gitignore
