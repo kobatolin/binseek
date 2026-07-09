@@ -64,7 +64,7 @@ class FileDialog(ModalScreen[Optional[str]]):
         self.save_mode = save_mode
         self._entries: list[Path] = []
 
-        path = Path(initial or Path.cwd()).expanduser()
+        path = Path(initial or Path.cwd()).expanduser().resolve()
         if path.is_file():
             self.current_dir = path.parent
             self.default_name = default_name or path.name
