@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from textual.app import ComposeResult
-from textual.containers import Vertical
+from textual.containers import Vertical, VerticalScroll
 from textual.screen import ModalScreen
 from textual.widgets import Button, Label, Static
 
@@ -19,8 +19,8 @@ def _format_col(items: list[tuple[str, str]], key_width: int) -> list[str]:
     return lines
 
 
-def _build_help_text() -> str:
-    """Build a compact two-column help text."""
+def _build_shortcuts_text() -> str:
+    """Build a compact two-column keyboard shortcuts text."""
     left = [
         ("Menu (function keys)", ""),
         ("F1", "Help"),
@@ -65,15 +65,45 @@ def _build_help_text() -> str:
     right_lines = _format_col(right, key_width)
     max_len = max(len(left_lines), len(right_lines))
 
-    lines: list[str] = []
+    lines: list[str] = ["Keyboard Shortcuts", ""]
     for i in range(max_len):
         l = left_lines[i] if i < len(left_lines) else ""
         r = right_lines[i] if i < len(right_lines) else ""
         if not r:
             lines.append(l)
         else:
-            lines.append(f"{l:<34}  {r}")
+            lines.append(f"{l:<32} {r}")
     return "\n".join(lines)
+
+
+def _build_regex_help_text() -> str:
+    """Build regex syntax help text."""
+    key_width = 13
+    lines: list[str] = ["Regex Search", ""]
+    for key, desc in [
+        (".", "Any byte"),
+        ("* + ?", "0+, 1+, optional"),
+        ("| ()", "Alternation, group"),
+        ("[]", "Character class"),
+        (r"\d \w \s", "Digit, word, whitespace"),
+        (r"\t \n \r \0", "Tab, newline, CR, null"),
+        (r"\xNN", "Byte in hex (ASCII mode)"),
+    ]:
+        lines.append(f"  {key:<{key_width}} {desc}")
+    lines.extend(["", "Hex Regex", ""])
+    for key, desc in [
+        ("12", "Exact byte"),
+        ("1. / .2", "High/low nibble wildcard"),
+        (".. / ?", "Any byte"),
+        ("[0-7]", "Nibble class/range"),
+    ]:
+        lines.append(f"  {key:<{key_width}} {desc}")
+    return "\n".join(lines)
+
+
+def _build_help_text() -> str:
+    """Build the full help text including shortcuts and regex help."""
+    return f"{_build_shortcuts_text()}\n\n{_build_regex_help_text()}"
 
 
 HELP_TEXT = _build_help_text()
@@ -87,15 +117,20 @@ class HelpDialog(ModalScreen[None]):
         align: center middle;
     }
     HelpDialog > Vertical {
-        width: 74;
+        width: 78;
         height: auto;
-        max-height: 80%;
+        max-height: 22;
         background: $surface;
         border: thick $background 80%;
         padding: 1 2;
     }
+    HelpDialog VerticalScroll {
+        height: 1fr;
+        border: none;
+        padding: 0;
+    }
     HelpDialog Static {
-        margin: 1 0;
+        height: auto;
     }
     HelpDialog Button {
         width: 100%;
@@ -104,8 +139,9 @@ class HelpDialog(ModalScreen[None]):
 
     def compose(self) -> ComposeResult:
         with Vertical():
-            yield Label("Keyboard Shortcuts")
-            yield Static(HELP_TEXT)
+            yield Label("HELP")
+            with VerticalScroll():
+                yield Static(HELP_TEXT)
             yield Button("Close", id="close")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
