@@ -146,7 +146,7 @@ class HexView(Static):
             return size if size % gs == 0 else (size // gs) * gs
         return ((size - 1) // gs) * gs
 
-    def _ensure_visible(self) -> None:
+    def _ensure_visible(self, center: bool = False) -> None:
         if not self._buffer:
             self._cursor = 0
             self._offset = 0

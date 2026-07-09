@@ -236,7 +236,7 @@ class BinseekApp(App[None]):
             self.notify("Pattern not found", severity="warning")
             return
         hex_view.set_search_results(results, results[0][0])
-        hex_view.jump_to(results[0][0])
+        hex_view.jump_to(results[0][0], center=True)
         self.notify(f"Found {len(results)} occurrence(s)")
 
     def action_find(self) -> None:
@@ -255,7 +255,7 @@ class BinseekApp(App[None]):
         offset, _length = match
         hex_view = self.query_one(HexView)
         hex_view.set_search_results(self._buffer._search_results, offset)
-        hex_view.jump_to(offset)
+        hex_view.jump_to(offset, center=True)
 
     def action_find_prev(self) -> None:
         if not self._buffer:
@@ -267,7 +267,7 @@ class BinseekApp(App[None]):
         offset, _length = match
         hex_view = self.query_one(HexView)
         hex_view.set_search_results(self._buffer._search_results, offset)
-        hex_view.jump_to(offset)
+        hex_view.jump_to(offset, center=True)
 
     def _do_replace(self, find: bytes, replace: bytes, replace_all: bool) -> None:
         if not self._buffer:
