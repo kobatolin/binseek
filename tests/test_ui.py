@@ -5,23 +5,29 @@ from __future__ import annotations
 import asyncio
 import os
 import tempfile
+from pathlib import Path
 
 from textual.app import App
-from textual.widgets import Button
+from textual.containers import VerticalScroll
+from textual.widgets import Button, Static
 
+from binseek import __version__
 from binseek.app import BinseekApp
 from binseek.ui.confirm_dialog import ConfirmDialog
-from binseek.ui.help_dialog import HELP_TEXT
+from binseek.ui.file_dialog import FileDialog
+from binseek.ui.help_dialog import HELP_TEXT, HelpDialog
 
 
-def test_hex_view_shows_shortcuts_when_no_file_open() -> None:
+def test_hex_view_shows_welcome_when_no_file_open() -> None:
     async def _run() -> None:
         app = BinseekApp()
         async with app.run_test() as pilot:
             hex_view = app.query_one("#hex")
             content = str(hex_view._Static__content)
-            assert "No file open" in content
-            assert HELP_TEXT.strip() in content.strip()
+            assert "BINSEEK" in content
+            assert __version__ in content
+            assert "Press F1 for Help" in content
+            assert "Press F2 to Open File" in content
 
     asyncio.run(_run())
 
@@ -912,3 +918,43 @@ def test_find_dialog_regex_mode() -> None:
             assert request.case_insensitive is True
 
     asyncio.run(_run())
+
+
+def test_file_dialog_initial_dot_resolves_and_shows_parent() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        original_cwd = os.getcwd()
+        try:
+            os.chdir(tmp)
+            dialog = FileDialog("Open", initial=".")
+            assert dialog.current_dir == Path(tmp)
+            entries = dialog._list_entries()
+            assert any(dialog._format_entry(e) == "../" for e in entries)
+        finally:
+            os.chdir(original_cwd)
+
+
+def test_help_dialog_static_is_scrollable() -> None:
+    async def _run() -> None:
+        app = App()
+        async with app.run_test(size=(80, 25)) as pilot:
+            dialog = HelpDialog()
+            app.push_screen(dialog)
+            await pilot.pause()
+            scroll = dialog.query_one(VerticalScroll)
+            assert scroll.virtual_size.height > scroll.container_size.height
+            assert scroll.max_scroll_y > 0
+            scroll.scroll_down(animate=False)
+            await pilot.pause()
+            assert scroll.scroll_y > 0
+            static = scroll.query_one(Static)
+            assert "Regex Search" in str(static.render())
+            assert "Hex Regex" in str(static.render())
+
+    asyncio.run(_run())
+
+
+def test_help_text_includes_regex_sections() -> None:
+    assert "Regex Search" in HELP_TEXT
+    assert "Hex Regex" in HELP_TEXT
+    assert r"\xNN" in HELP_TEXT
+

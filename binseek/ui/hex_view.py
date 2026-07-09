@@ -10,8 +10,8 @@ from textual.widgets import Static
 from textual.events import Key, MouseScrollDown, MouseScrollUp, MouseUp
 from rich.text import Text
 
+from binseek import __version__
 from binseek.model.buffer import Buffer
-from binseek.ui.help_dialog import HELP_TEXT
 
 
 class EditMode(Enum):
@@ -168,23 +168,29 @@ class HexView(Static):
         bpr = self.BYTES_PER_ROW
         clamped = min(self._cursor, size - 1)
         row_start = (clamped // bpr) * bpr
-        if row_start < self._offset:
+        last_row_start = ((size - 1) // bpr) * bpr
+        max_offset = max(0, last_row_start - (self._page_rows - 1) * bpr)
+
+        if center:
+            middle_rows = self._page_rows // 2
+            self._offset = max(
+                0, min(row_start - middle_rows * bpr, max_offset)
+            )
+        elif row_start < self._offset:
             self._offset = row_start
         elif row_start + bpr > self._offset + page_size:
             # Scroll down just enough to bring the cursor row into view,
             # but never past the last aligned page.
             new_offset = row_start + bpr - page_size
             new_offset = (new_offset // bpr) * bpr
-            last_row_start = ((size - 1) // bpr) * bpr
-            max_offset = max(0, last_row_start - (self._page_rows - 1) * bpr)
             self._offset = min(new_offset, max_offset)
 
-    def jump_to(self, offset: int) -> None:
+    def jump_to(self, offset: int, center: bool = False) -> None:
         if not self._buffer:
             return
         self._cursor = offset
         self._align_cursor()
-        self._ensure_visible()
+        self._ensure_visible(center=center)
         self.refresh_view()
 
     def set_search_results(
@@ -304,12 +310,15 @@ class HexView(Static):
 
     def refresh_view(self) -> None:
         if not self._buffer:
-            message = Text()
-            message.append("No file open\n\n", style="bold")
-            message.append(HELP_TEXT)
+            self.styles.content_align = ("center", "middle")
+            message = Text(justify="center")
+            message.append(f"BINSEEK {__version__}\n\n", style="bold")
+            message.append("Press F1 for Help\n")
+            message.append("Press F2 to Open File")
             self.update(message)
             return
 
+        self.styles.content_align = ("left", "top")
         size = self._buffer.size
         append_cursor = self._mode == EditMode.INSERT and self._cursor == size
         placeholder_style = "bold black on green"
