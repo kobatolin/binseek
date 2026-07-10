@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import asyncio
 import os
-import tempfile
+import pathlib
+from unittest.mock import patch
 from pathlib import Path
+import tempfile
 
 from textual.app import App
 from textual.containers import VerticalScroll
@@ -833,6 +835,56 @@ def test_status_bar_shows_workspace() -> None:
         os.unlink(path)
 
 
+def test_status_bar_ellipsizes_long_path() -> None:
+    long_path = "/a/very/long/path/to/the/file/" + "x" * 40 + "/target.bin"
+    app = BinseekApp()
+
+    async def _run() -> None:
+        async with app.run_test(size=(80, 24)) as pilot:
+            await pilot.pause()
+            status = app.query_one("#status")
+            status.update_status(path=long_path, size=8, offset=0)
+            await pilot.pause()
+            content = str(status._Static__content)
+            assert "Size: 8" in content
+            assert "Offset: 0x00000000 (0)" in content
+            assert "..." in content
+            assert len(content) <= 78
+
+    try:
+        asyncio.run(_run())
+    finally:
+        if app._buffer:
+            app._buffer.close()
+
+
+def test_status_bar_updates_on_resize() -> None:
+    long_path = "/a/very/long/path/to/the/file/" + "x" * 40 + "/target.bin"
+    app = BinseekApp()
+
+    async def _run() -> None:
+        async with app.run_test(size=(80, 24)) as pilot:
+            await pilot.pause()
+            status = app.query_one("#status")
+            status.update_status(path=long_path, size=8, offset=0)
+            await pilot.pause()
+            narrow = str(status._Static__content)
+            assert "..." in narrow
+
+            # Resize the app to a width where the whole path fits.
+            await pilot.resize_terminal(200, 24)
+            await pilot.pause()
+            wide = str(status._Static__content)
+            assert long_path in wide
+            assert "..." not in wide
+
+    try:
+        asyncio.run(_run())
+    finally:
+        if app._buffer:
+            app._buffer.close()
+
+
 def test_tab_does_not_switch_workspace_in_view_mode() -> None:
     with tempfile.NamedTemporaryFile(delete=False) as f:
         f.write(b"ABCDEFGH")
@@ -918,6 +970,102 @@ def test_find_dialog_regex_mode() -> None:
             assert request.case_insensitive is True
 
     asyncio.run(_run())
+
+
+def test_file_dialog_drives_root_lists_available_drives() -> None:
+    class _MockWindowsPath(pathlib.PureWindowsPath):
+        def expanduser(self):
+            return self
+
+        def resolve(self, strict: bool = False):
+            return self
+
+        def exists(self) -> bool:
+            return True
+
+        def is_dir(self) -> bool:
+            return True
+
+        def is_file(self) -> bool:
+            return False
+
+        def iterdir(self) -> list[Path]:
+            return []
+
+    def _exists(path: str) -> bool:
+        return path in ("C:\\", "D:\\")
+
+    drives_root = _MockWindowsPath("DRIVES")
+    with patch("binseek.ui.file_dialog.os.name", "nt"):
+        with patch("binseek.ui.file_dialog.os.path.exists", _exists):
+            with patch("binseek.ui.file_dialog.Path", _MockWindowsPath):
+                with patch.object(FileDialog, "_DRIVES_ROOT", drives_root):
+                    dialog = FileDialog("Open", initial="C:\\")
+                    dialog.current_dir = dialog._DRIVES_ROOT
+                    entries = dialog._list_entries()
+                    assert _MockWindowsPath("C:\\") in entries
+                    assert _MockWindowsPath("D:\\") in entries
+                    assert all(dialog._is_windows_drive_root(e) for e in entries)
+
+
+def test_file_dialog_windows_drive_root_offers_drives_parent() -> None:
+    class _MockWindowsPath(pathlib.PureWindowsPath):
+        def expanduser(self):
+            return self
+
+        def resolve(self, strict: bool = False):
+            return self
+
+        def exists(self) -> bool:
+            return True
+
+        def is_dir(self) -> bool:
+            return True
+
+        def is_file(self) -> bool:
+            return False
+
+        def iterdir(self) -> list[Path]:
+            return []
+
+    drives_root = _MockWindowsPath("DRIVES")
+    with patch("binseek.ui.file_dialog.os.name", "nt"):
+        with patch("binseek.ui.file_dialog.Path", _MockWindowsPath):
+            with patch.object(FileDialog, "_DRIVES_ROOT", drives_root):
+                dialog = FileDialog("Open", initial="C:\\")
+                entries = dialog._list_entries()
+                assert dialog._DRIVES_ROOT in entries
+
+
+def test_file_dialog_parent_of_subdirectory_shows_dotdot() -> None:
+    class _MockWindowsPath(pathlib.PureWindowsPath):
+        def expanduser(self):
+            return self
+
+        def resolve(self, strict: bool = False):
+            return self
+
+        def exists(self) -> bool:
+            return True
+
+        def is_dir(self) -> bool:
+            return True
+
+        def is_file(self) -> bool:
+            return False
+
+        def iterdir(self) -> list[Path]:
+            return []
+
+    drives_root = _MockWindowsPath("DRIVES")
+    with patch("binseek.ui.file_dialog.os.name", "nt"):
+        with patch("binseek.ui.file_dialog.Path", _MockWindowsPath):
+            with patch.object(FileDialog, "_DRIVES_ROOT", drives_root):
+                dialog = FileDialog("Open", initial="D:\\123\\")
+                entries = dialog._list_entries()
+                parent = _MockWindowsPath("D:\\")
+                assert parent in entries
+                assert dialog._format_entry(parent) == "../"
 
 
 def test_file_dialog_initial_dot_resolves_and_shows_parent() -> None:

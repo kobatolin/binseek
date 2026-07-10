@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+import string
 from pathlib import Path
 from typing import Optional, Union
 
@@ -16,6 +18,8 @@ class FileDialog(ModalScreen[Optional[str]]):
 
     Returns the selected absolute path as a string, or ``None`` when cancelled.
     """
+
+    _DRIVES_ROOT = Path("DRIVES")
 
     DEFAULT_CSS = """
     FileDialog {
@@ -88,6 +92,9 @@ class FileDialog(ModalScreen[Optional[str]]):
 
     def _list_entries(self) -> list[Path]:
         """Return the directory entries to show, ordered dirs-first."""
+        if os.name == "nt" and self.current_dir == self._DRIVES_ROOT:
+            return self._list_windows_drives()
+
         entries: list[Path] = []
         try:
             for child in self.current_dir.iterdir():
@@ -103,11 +110,31 @@ class FileDialog(ModalScreen[Optional[str]]):
         files = sorted((p for p in entries if p.is_file()), key=lambda p: p.name.lower())
 
         result: list[Path] = []
-        if self.current_dir.parent != self.current_dir:
+        if os.name == "nt" and self._is_windows_drive_root(self.current_dir):
+            result.append(self._DRIVES_ROOT)
+        elif self.current_dir.parent != self.current_dir:
             result.append(self.current_dir.parent)
         result.extend(dirs)
         result.extend(files)
         return result
+
+    def _list_windows_drives(self) -> list[Path]:
+        """Return all available Windows drive letters as Paths."""
+        drives: list[Path] = []
+        for letter in string.ascii_uppercase:
+            drive = f"{letter}:\\"
+            try:
+                if os.path.exists(drive):
+                    drives.append(Path(drive))
+            except OSError:
+                continue
+        return drives
+
+    def _is_windows_drive_root(self, path: Path) -> bool:
+        r"""Check whether a path is a Windows drive root like C:\."""
+        if os.name != "nt":
+            return False
+        return bool(path.drive) and path.parent == path
 
     def _refresh_list(self) -> None:
         """Repaint the directory list."""
@@ -116,11 +143,16 @@ class FileDialog(ModalScreen[Optional[str]]):
         self._entries = self._list_entries()
         for entry in self._entries:
             list_view.append(ListItem(Label(self._format_entry(entry), markup=False)))
-        self.query_one("#current-dir", Label).update(str(self.current_dir))
+        display = "Drives" if self.current_dir == self._DRIVES_ROOT else str(self.current_dir)
+        self.query_one("#current-dir", Label).update(display)
 
     def _format_entry(self, entry: Path) -> str:
+        if entry == self._DRIVES_ROOT:
+            return "../"
         if entry == self.current_dir.parent:
             return "../"
+        if self._is_windows_drive_root(entry):
+            return f"[D] {entry}"
         if entry.is_dir():
             return f"[D] {entry.name}/"
         return f"[F] {entry.name}"
@@ -131,7 +163,7 @@ class FileDialog(ModalScreen[Optional[str]]):
         if index is None or index < 0 or index >= len(self._entries):
             return
         entry = self._entries[index]
-        if entry == self.current_dir.parent or entry.is_dir():
+        if entry == self._DRIVES_ROOT or entry == self.current_dir.parent or entry.is_dir():
             return
         self.query_one("#filename", Input).value = entry.name
 
@@ -141,6 +173,10 @@ class FileDialog(ModalScreen[Optional[str]]):
         if index is None or index < 0 or index >= len(self._entries):
             return
         entry = self._entries[index]
+        if entry == self._DRIVES_ROOT:
+            self.current_dir = self._DRIVES_ROOT
+            self._refresh_list()
+            return
         if entry == self.current_dir.parent or entry.is_dir():
             self.current_dir = entry if entry.is_dir() else self.current_dir.parent
             self._refresh_list()
